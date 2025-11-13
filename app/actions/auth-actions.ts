@@ -239,6 +239,111 @@ export async function registerAction(
 }
 
 /**
+ * Server Action: Request password reset
+ * Sends a password reset link via Supabase email
+ */
+export async function requestPasswordResetAction(email: string) {
+  try {
+    if (!email) {
+      return {
+        success: false,
+        error: "Email is required.",
+        errorCode: "MISSING_EMAIL",
+      }
+    }
+
+    const supabase = createSupabaseServerClient()
+
+    // Request password reset - Supabase will send an email
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`,
+    })
+
+    if (error) {
+      return {
+        success: false,
+        error: error.message || "Failed to send reset email.",
+        errorCode: "RESET_REQUEST_FAILED",
+      }
+    }
+
+    return {
+      success: true,
+      message: "Password reset email sent. Please check your inbox.",
+    }
+  } catch (error) {
+    console.error("Password reset request error:", error)
+    return {
+      success: false,
+      error: "An unexpected error occurred.",
+      errorCode: "UNKNOWN_ERROR",
+    }
+  }
+}
+
+/**
+ * Server Action: Update password with reset token
+ * Called after user receives reset link and enters new password
+ */
+export async function updatePasswordWithTokenAction(
+  newPassword: string,
+  confirmPassword: string,
+) {
+  try {
+    if (!newPassword || !confirmPassword) {
+      return {
+        success: false,
+        error: "Both password fields are required.",
+        errorCode: "MISSING_PASSWORD",
+      }
+    }
+
+    if (newPassword !== confirmPassword) {
+      return {
+        success: false,
+        error: "Passwords do not match.",
+        errorCode: "PASSWORD_MISMATCH",
+      }
+    }
+
+    if (newPassword.length < 6) {
+      return {
+        success: false,
+        error: "Password must be at least 6 characters long.",
+        errorCode: "PASSWORD_TOO_SHORT",
+      }
+    }
+
+    const supabase = createSupabaseServerClient()
+
+    // Update user password
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    })
+
+    if (error) {
+      return {
+        success: false,
+        error: error.message || "Failed to update password.",
+        errorCode: "UPDATE_FAILED",
+      }
+    }
+
+    return {
+      success: true,
+      message: "Password updated successfully.",
+    }
+  } catch (error) {
+    console.error("Password update error:", error)
+    return {
+      success: false,
+      error: "An unexpected error occurred.",
+      errorCode: "UNKNOWN_ERROR",
+    }
+  }
+}
+
+/**
  * Server Action: Logout user
  * Clears the session and removes auth cookies
  */
