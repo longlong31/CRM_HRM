@@ -1,31 +1,30 @@
-// File: lib/supabase/server.ts (Fixed cookies handling for Next.js 15 App Router)
+// File: lib/supabase/server.ts (Server-side Supabase client without auth-helpers cookies issue)
 
-import { createBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
+import { cookies as getCookies } from "next/headers";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 /**
  * Creates a Supabase Client for Server Components and Route Handlers.
- * Uses createBrowserClient pattern to avoid async/await issues with cookies in Next.js 15.
+ * Uses plain supabase-js client with custom cookie handler to avoid async/await issues.
+ * The client manages its own session based on cookies provided.
  */
 export const createSupabaseServerClient = () => {
-  const cookieStore = cookies();
+  const cookieStore = getCookies();
 
-  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
-      },
-      setAll(cookiesToSet) {
-        try {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
-        } catch {
-          // Handle the error silently in server context
-        }
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+    },
+    global: {
+      headers: {
+        // Pass cookies to the server request headers if needed
+        cookie: cookieStore
+          .getAll()
+          .map(({ name, value }) => `${name}=${value}`)
+          .join(";"),
       },
     },
   });
