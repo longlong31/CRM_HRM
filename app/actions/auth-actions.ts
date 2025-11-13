@@ -15,7 +15,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/supabase"
 export async function loginAction(email: string, password: string) {
   try {
     // 1. Create Supabase client for server-side operations
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
 
     // 2. Sign in with email and password
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
