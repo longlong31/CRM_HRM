@@ -1,18 +1,31 @@
-// File: src/lib/supabase/server.ts (Khắc phục lỗi đồng bộ cookies)
+// File: lib/supabase/server.ts (Server-side Supabase client without auth-helpers cookies issue)
 
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
+import { cookies as getCookies } from "next/headers";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 /**
- * Hàm tạo Supabase Client cho Server Component và Route Handler.
- * Luôn được gọi để đọc cookies Auth từ Request.
+ * Creates a Supabase Client for Server Components and Route Handlers.
+ * Uses plain supabase-js client with custom cookie handler to avoid async/await issues.
+ * The client manages its own session based on cookies provided.
  */
 export const createSupabaseServerClient = () => {
-  const cookieStore = cookies();
+  const cookieStore = getCookies();
 
-  // FIX: Truyền đối tượng cookies theo cú pháp chuẩn của Auth Helpers
-  return createServerComponentClient({ cookies: () => cookieStore });
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+    },
+    global: {
+      headers: {
+        // Pass cookies to the server request headers if needed
+        cookie: cookieStore
+          .getAll()
+          .map(({ name, value }) => `${name}=${value}`)
+          .join(";"),
+      },
+    },
+  });
 };

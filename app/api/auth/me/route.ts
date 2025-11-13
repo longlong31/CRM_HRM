@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { supabaseAdmin } from "@/lib/supabase/supabase"
+import { getSupabaseAdmin } from "@/lib/supabase/supabase"
 
 const ADMIN_EMAILS = new Set([
   "stephensouth1307@gmail.com",
@@ -12,6 +12,11 @@ export async function POST(request: NextRequest) {
     const { id, email } = await request.json()
     if (!id || !email) {
       return NextResponse.json({ error: "Missing id or email" }, { status: 400 })
+    }
+
+    const supabaseAdmin = getSupabaseAdmin()
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: "Server configuration error" }, { status: 500 })
     }
 
     const { data: userProfile } = await supabaseAdmin

@@ -187,62 +187,22 @@ export const useAppStore = create<AppState>()(
       login: async (email, password) => {
         try {
           set({ isLoading: true })
-          const response = await fetch("/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
-          })
 
-          // Use clone() to inspect body safely, then parse original as JSON
-          let bodyText = null
-          try {
-            bodyText = await response.clone().text()
-          } catch (e) {
-            console.warn("Failed to clone response body:", e)
-          }
+          // Import and call Server Action
+          const { loginAction } = await import("@/app/actions/auth-actions")
+          const result = await loginAction(email, password)
 
-          if (!response.ok) {
-            // Provide richer debug info: status and body text
-            console.error(
-              `Login failed: status=${response.status} ${response.statusText}`,
-            )
-            if (bodyText) {
-              try {
-                const parsed = JSON.parse(bodyText)
-                console.error("Login response body:", parsed)
-              } catch (e) {
-                console.error("Login response body (text):", bodyText)
-              }
-            } else {
-              console.error("Login response body: <empty>")
-            }
+          if (!result.success) {
+            console.error("Login failed:", result.error)
             return false
           }
 
-          let data: any = {}
-          try {
-            data = await response.json()
-          } catch (e) {
-            // Fallback to parsed text if response.json() fails
-            try {
-              data = bodyText ? JSON.parse(bodyText) : {}
-            } catch (err) {
-              console.warn("Couldn't parse login response JSON, falling back to empty object", err)
-              data = {}
-            }
-          }
-
-          const { user } = data || {}
-          if (!user) {
-            console.error("No user in response, full response:", data)
-            return false
-          }
-          if (!user) {
-            console.error("No user in response")
+          if (!result.user) {
+            console.error("No user in login response")
             return false
           }
 
-          set({ user, isAuthenticated: true })
+          set({ user: result.user, isAuthenticated: true })
           return true
         } catch (error) {
           console.error("Login error:", error)
@@ -264,56 +224,26 @@ export const useAppStore = create<AppState>()(
       register: async (email, password, name, org_id) => {
         try {
           set({ isLoading: true })
-          const response = await fetch("/api/auth/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password, name, org_id }),
-          })
 
-          let bodyText = null
-          try {
-            bodyText = await response.clone().text()
-          } catch (e) {
-            console.warn("Failed to clone register response body:", e)
-          }
+          // Import and call Server Action
+          const { registerAction, loginAction } = await import("@/app/actions/auth-actions")
+          const result = await registerAction(email, password, name, org_id)
 
-          if (!response.ok) {
-            console.error(`Registration failed: status=${response.status} ${response.statusText}`)
-            if (bodyText) {
-              try {
-                console.error("Registration response body:", JSON.parse(bodyText))
-              } catch (e) {
-                console.error("Registration response body (text):", bodyText)
-              }
-            }
+          if (!result.success) {
+            console.error("Registration failed:", result.error)
             return false
           }
 
-          let data: any = {}
-          try {
-            data = await response.json()
-          } catch (e) {
-            try {
-              data = bodyText ? JSON.parse(bodyText) : {}
-            } catch (err) {
-              console.warn("Couldn't parse register response JSON, falling back to empty object", err)
-              data = {}
-            }
-          }
+          // Registration successful - now auto-login the user
+          const loginResult = await loginAction(email, password)
 
-          // Registration succeeded. Backend may not return a full session/user.
-          // Do NOT auto-authenticate the user here; require explicit login or callback flow.
-          if (response.status === 201 || response.status === 200) {
-            console.info("Registration successful")
+          if (loginResult.success && loginResult.user) {
+            set({ user: loginResult.user, isAuthenticated: true })
+            console.info("Registration and login successful")
             return true
           }
 
-          // If backend returned a user (some flows might), keep it but do not set isAuthenticated
-          const { user } = data || {}
-          if (user) {
-            set({ user })
-          }
-
+          console.info("Registration successful but auto-login failed - user needs to login manually")
           return true
         } catch (error) {
           console.error("Registration error:", error)

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { supabaseAdmin } from "@/lib/supabase/supabase"
+import { getSupabaseAdmin } from "@/lib/supabase/supabase"
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,6 +10,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Email, password, name, and org_id are required" },
         { status: 400 },
+      )
+    }
+
+    // Get Admin Client as a function (fixes async I/O error)
+    const supabaseAdmin = getSupabaseAdmin()
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 },
       )
     }
 
