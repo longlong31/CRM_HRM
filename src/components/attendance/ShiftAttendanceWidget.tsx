@@ -358,9 +358,12 @@ const ShiftAttendanceWidget = () => {
   };
 
   const filteredRecords = allRecords.filter(record => {
-    const recordDate = new Date(record.date);
+    const recordDate = new Date(record.timestamp);
+    const today = new Date().toISOString().split('T')[0];
+    const recordDay = recordDate.toISOString().split('T')[0];
+
     if (activeTab === 'today') {
-      return record.date === new Date().toISOString().split('T')[0];
+      return recordDay === today;
     } else if (activeTab === 'week') {
       return recordDate >= startOfWeek(new Date()) && recordDate <= endOfWeek(new Date());
     } else {
