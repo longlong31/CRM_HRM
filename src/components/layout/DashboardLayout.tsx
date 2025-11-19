@@ -191,9 +191,9 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
                 </div>
             </header>
 
-            <div className="flex">
+            <div className="flex flex-1 overflow-hidden">
                 {/* Sidebar (Desktop) */}
-                <aside className="hidden md:flex w-64 flex-col fixed h-[calc(100vh-4rem)] border-r bg-card shadow-inner">
+                <aside className="hidden md:flex w-64 flex-col border-r bg-card shadow-inner overflow-y-auto">
                     <nav className="flex-1 space-y-1 p-4 pt-6">
                         {menuItems.map((item) => {
                             const active = isActive(item.path);
@@ -201,26 +201,57 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
                                 <Button
                                     key={item.path}
                                     variant={active ? "secondary" : "ghost"}
-                                    className="w-full justify-start font-medium text-base"
+                                    className="w-full justify-start font-medium text-base transition-all hover:translate-x-0.5"
                                     onClick={() => navigate(item.path)}
                                 >
-                                    <item.icon className="mr-3 h-5 w-5" />
-                                    {item.label}
+                                    <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                                    <span className="truncate">{item.label}</span>
                                 </Button>
                             );
                         })}
                     </nav>
                 </aside>
 
+                {/* Mobile Sidebar (Overlay) */}
+                {isMobileMenuOpen && (
+                    <>
+                        <div
+                            className="fixed inset-0 bg-black/50 md:hidden z-30"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                        <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-card shadow-lg z-40 overflow-y-auto md:hidden">
+                            <nav className="flex flex-col space-y-1 p-4">
+                                {menuItems.map((item) => {
+                                    const active = isActive(item.path);
+                                    return (
+                                        <Button
+                                            key={item.path}
+                                            variant={active ? "secondary" : "ghost"}
+                                            className="w-full justify-start font-medium text-base transition-all hover:translate-x-0.5"
+                                            onClick={() => {
+                                                navigate(item.path);
+                                                setIsMobileMenuOpen(false);
+                                            }}
+                                        >
+                                            <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                                            <span className="truncate">{item.label}</span>
+                                        </Button>
+                                    );
+                                })}
+                            </nav>
+                        </aside>
+                    </>
+                )}
+
                 {/* Main Content */}
-                <main className="flex-1 md:ml-64 p-4 md:p-6 pb-20">
+                <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
                     {children}
                 </main>
             </div>
 
-            {/* Mobile Bottom Navigation (Chỉ hiển thị 5 mục đầu tiên) */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t z-50 shadow-2xl">
-                <div className="grid grid-cols-5 gap-1 p-1">
+            {/* Mobile Bottom Navigation */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t z-40 shadow-2xl">
+                <div className="grid grid-cols-5 gap-0.5 p-1">
                     {menuItems.slice(0, 5).map((item) => {
                         const active = isActive(item.path);
                         return (
@@ -228,11 +259,11 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
                                 key={item.path}
                                 variant={active ? "secondary" : "ghost"}
                                 size="sm"
-                                className="flex flex-col h-auto py-2 px-1 text-center"
+                                className="flex flex-col h-auto py-2 px-0.5 text-center rounded-sm transition-colors"
                                 onClick={() => navigate(item.path)}
                             >
-                                <item.icon className="h-5 w-5 mb-1 mx-auto" />
-                                <span className="text-xs">{item.label}</span>
+                                <item.icon className="h-5 w-5 mb-1 mx-auto flex-shrink-0" />
+                                <span className="text-xs font-medium line-clamp-2">{item.label}</span>
                             </Button>
                         );
                     })}
