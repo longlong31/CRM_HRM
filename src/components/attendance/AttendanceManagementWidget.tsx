@@ -299,7 +299,7 @@ const AttendanceManagementWidget = () => {
                       <SelectValue placeholder="Tất cả" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Tất cả</SelectItem>
+                      <SelectItem value="all">Tất cả</SelectItem>
                       <SelectItem value="present">Đầy đủ</SelectItem>
                       <SelectItem value="absent">Vắng mặt</SelectItem>
                       <SelectItem value="leave">Nghỉ phép</SelectItem>
