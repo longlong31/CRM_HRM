@@ -50,9 +50,9 @@ const EditTaskDialog = ({ task, open, onOpenChange, onTaskUpdated }: EditTaskDia
   const fetchUsers = async () => {
     const { data } = await supabase
       .from('profiles')
-      .select('id, first_name, last_name')
-      .order('first_name');
-    
+      .select('id, full_name, email')
+      .order('full_name');
+
     if (data) setUsers(data);
   };
 

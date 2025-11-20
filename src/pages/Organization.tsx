@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react"; // Nhập các hook useState, useEffect từ React
-import DashboardLayout from "@/components/layout/DashboardLayout"; // Nhập DashboardLayout
-import { getUserRole, getCurrentUser } from "@/lib/auth"; // Nhập getUserRole, getCurrentUser từ thư viện xác thực
-import { UserRole } from "@/lib/auth"; // Nhập kiểu UserRole
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Nhập các thành phần Tabs
-import TeamsManagement from "@/components/organization/TeamsManagement"; // Nhập Quản lý Đội nhóm
-import ShiftsManagement from "@/components/organization/ShiftsManagement"; // Nhập Quản lý Ca làm
-import UsersManagement from "@/components/organization/UsersManagement"; // Nhập Quản lý Người dùng
-import AttendanceSettings from "@/components/organization/AttendanceSettings"; // Nhập Cài đặt Chấm công
-import SalaryManagement from "@/components/organization/SalaryManagement"; // Nhập Quản lý Lương
-import SalaryStatistics from "@/components/organization/SalaryStatistics"; // Nhập Thống kê Lương
+import { useState, useEffect } from "react";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import { getUserRole, getCurrentUser } from "@/lib/auth";
+import { UserRole } from "@/lib/auth";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TeamsManagement from "@/components/organization/TeamsManagement";
+import ShiftsManagement from "@/components/organization/ShiftsManagement";
+import UsersManagement from "@/components/organization/UsersManagement";
+import AttendanceManagement from "@/components/organization/AttendanceManagement";
+import SalaryManagement from "@/components/organization/SalaryManagement";
+import SalaryStatistics from "@/components/organization/SalaryStatistics";
 
 const Organization = () => {
  // Khởi tạo state role (vai trò) mặc định là 'staff' (nhân viên)
@@ -43,48 +43,48 @@ const Organization = () => {
   );
  }
 
- return (
-  // Hiển thị layout Dashboard
-  <DashboardLayout role={role}>
-   <div className="space-y-6 animate-fade-in pb-20 md:pb-6">
-    <div className="mb-2">
-     <h2 className="text-4xl font-heading font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-      Tổ Chức
-     </h2>
-     <p className="text-muted-foreground mt-2">Quản lý đội nhóm, người dùng, ca làm và cài đặt</p>
-    </div>
+  return (
+    <DashboardLayout role={role}>
+      <div className="space-y-4 md:space-y-6 animate-fade-in pb-20 md:pb-6">
+        <div className="mb-2">
+          <h1 className="bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent text-2xl md:text-3xl lg:text-4xl">
+            Quản Lý Tổ Chức
+          </h1>
+          <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Quản lý đội nhóm, người dùng, ca làm, chấm công và lương</p>
+        </div>
 
-    <Tabs defaultValue="teams" className="w-full">
-     <TabsList className="bg-secondary shadow-soft">
-      <TabsTrigger value="teams" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Đội nhóm</TabsTrigger>
-      <TabsTrigger value="users" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Người dùng</TabsTrigger>
-      <TabsTrigger value="shifts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Ca làm</TabsTrigger>
-      <TabsTrigger value="salary" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Lương</TabsTrigger>
-      <TabsTrigger value="statistics" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Thống kê</TabsTrigger>
-      <TabsTrigger value="settings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Chấm công</TabsTrigger>
-     </TabsList>
-     <TabsContent value="teams" className="mt-6">
-      <TeamsManagement /> 
-     </TabsContent>
-     <TabsContent value="users" className="mt-6">
-      <UsersManagement />
-     </TabsContent>
-     <TabsContent value="shifts" className="mt-6">
-      <ShiftsManagement /> 
-     </TabsContent>
-     <TabsContent value="salary" className="mt-6">
-      <SalaryManagement /> 
-     </TabsContent>
-     <TabsContent value="statistics" className="mt-6">
-      <SalaryStatistics /> 
-     </TabsContent>
-     <TabsContent value="settings" className="mt-6">
-      <AttendanceSettings /> 
-     </TabsContent>
-    </Tabs>
-   </div>
-  </DashboardLayout>
- );
+        <Tabs defaultValue="teams" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 gap-1">
+            <TabsTrigger value="teams" className="data-[state=active]:bg-primary text-xs md:text-sm">Đội nhóm</TabsTrigger>
+            <TabsTrigger value="users" className="data-[state=active]:bg-primary text-xs md:text-sm">Người dùng</TabsTrigger>
+            <TabsTrigger value="shifts" className="data-[state=active]:bg-primary text-xs md:text-sm">Ca làm</TabsTrigger>
+            <TabsTrigger value="attendance" className="data-[state=active]:bg-primary text-xs md:text-sm">Chấm công</TabsTrigger>
+            <TabsTrigger value="salary" className="data-[state=active]:bg-primary text-xs md:text-sm">Lương</TabsTrigger>
+            <TabsTrigger value="statistics" className="data-[state=active]:bg-primary text-xs md:text-sm">Thống kê</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="teams" className="mt-6">
+            <TeamsManagement />
+          </TabsContent>
+          <TabsContent value="users" className="mt-6">
+            <UsersManagement />
+          </TabsContent>
+          <TabsContent value="shifts" className="mt-6">
+            <ShiftsManagement />
+          </TabsContent>
+          <TabsContent value="attendance" className="mt-6">
+            <AttendanceManagement />
+          </TabsContent>
+          <TabsContent value="salary" className="mt-6">
+            <SalaryManagement />
+          </TabsContent>
+          <TabsContent value="statistics" className="mt-6">
+            <SalaryStatistics />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </DashboardLayout>
+  );
 };
 
 export default Organization; // Xuất component Organization

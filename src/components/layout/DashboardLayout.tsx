@@ -2,12 +2,12 @@ import React, { ReactNode, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger 
+import {
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { 
+import {
     LayoutDashboard, Users, CheckSquare, Calendar, LogOut, User,
-    Moon, Sun, Clock, Settings, Menu, ListChecks, FileText, Briefcase
+    Moon, Sun, Clock, Settings, Menu, X, ListChecks, FileText, Briefcase
 } from "lucide-react";
 // Giả định các hàm này trả về các kiểu đã định nghĩa
 import { getCurrentUser, getUserProfile, signOut, UserRole, getUserRole } from "@/lib/auth";
@@ -17,11 +17,11 @@ import NotificationBell from "@/components/notifications/NotificationBell";
 // --- Định nghĩa kiểu dữ liệu ---
 
 interface CurrentUser { id: string; email?: string | null; }
-interface UserProfile { first_name: string; last_name: string; avatar_url: string | null; }
+interface UserProfile { full_name: string; avatar_url: string | null; }
 
 // --- Cấu trúc Menu Điều hướng ---
 interface NavItem {
-    icon: React.ElementType; 
+    icon: React.ElementType;
     label: string;
     path: string;
 }
@@ -38,6 +38,7 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [userRole, setUserRole] = useState<UserRole>(role);
     const [isDark, setIsDark] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // --- LOGIC MENU ITEMS ---
     const baseMenuItems: NavItem[] = [
@@ -102,7 +103,7 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
     };
     
     const getFullName = () => {
-        return profile?.first_name && profile?.last_name ? `${profile.last_name} ${profile.first_name}` : 'Người dùng';
+        return profile?.full_name || 'Người dùng';
     };
 
     const getRoleDisplayName = (r: UserRole) => {
@@ -113,41 +114,51 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
 
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background flex flex-col">
             {/* Top Navigation */}
             <header className="sticky top-0 z-50 w-full border-b bg-card shadow-md">
-                <div className="flex h-16 items-center px-4 md:px-6">
+                <div className="flex h-16 items-center px-4 md:px-6 justify-between">
                     {/* Logo and App Name */}
-                    <div 
-                        className="flex items-center gap-3 cursor-pointer"
+                    <div
+                        className="flex items-center gap-2 md:gap-3 cursor-pointer flex-1 min-w-0"
                         onClick={() => navigate("/dashboard")}
                     >
-                        <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center overflow-hidden p-1 shadow-sm">
-                            <img 
-                                src="/LOGO.PNG" 
+                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-primary flex items-center justify-center overflow-hidden p-1 shadow-sm flex-shrink-0">
+                            <img
+                                src="/LOGO.PNG"
                                 alt="HRM CRM Logo"
                                 className="w-full h-full object-contain"
                             />
                         </div>
-                        <div>
-                            <h1 className="text-xl font-extrabold tracking-tight">HRM CRM</h1>
-                            <p className="text-xs text-muted-foreground">{getRoleDisplayName(userRole)} Dashboard</p>
+                        <div className="hidden sm:block min-w-0">
+                            <h1 className="text-lg md:text-xl font-heading font-bold tracking-tight truncate">HRM CRM</h1>
+                            <p className="text-xs text-muted-foreground hidden md:block">{getRoleDisplayName(userRole)}</p>
                         </div>
                     </div>
 
-                    <div className="ml-auto flex items-center gap-4">
+                    <div className="flex items-center gap-2 md:gap-4 ml-2 md:ml-auto flex-shrink-0">
                         <NotificationBell />
                         <Button variant="ghost" size="icon" onClick={toggleTheme} className="hidden sm:inline-flex">
                             {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                         </Button>
 
+                        {/* Mobile Menu Button */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="md:hidden"
+                        >
+                            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                        </Button>
+
                         {/* User Dropdown */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                                <Button variant="ghost" className="relative h-10 w-10 rounded-full flex-shrink-0">
                                     <Avatar>
                                         <AvatarImage src={profile?.avatar_url || undefined} />
-                                        <AvatarFallback className="bg-primary text-white">
+                                        <AvatarFallback className="bg-primary text-white font-heading font-semibold">
                                             {getInitials()}
                                         </AvatarFallback>
                                     </Avatar>
@@ -156,7 +167,7 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
                             <DropdownMenuContent align="end" className="w-56">
                                 <DropdownMenuLabel>
                                     <div className="flex flex-col space-y-1">
-                                        <p className="text-sm font-medium">{getFullName()}</p>
+                                        <p className="text-sm font-semibold">{getFullName()}</p>
                                         <p className="text-xs text-muted-foreground">{user?.email}</p>
                                     </div>
                                 </DropdownMenuLabel>
@@ -180,9 +191,9 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
                 </div>
             </header>
 
-            <div className="flex">
+            <div className="flex flex-1 overflow-hidden">
                 {/* Sidebar (Desktop) */}
-                <aside className="hidden md:flex w-64 flex-col fixed h-[calc(100vh-4rem)] border-r bg-card shadow-inner">
+                <aside className="hidden md:flex w-64 flex-col border-r bg-card shadow-inner overflow-y-auto">
                     <nav className="flex-1 space-y-1 p-4 pt-6">
                         {menuItems.map((item) => {
                             const active = isActive(item.path);
@@ -190,26 +201,57 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
                                 <Button
                                     key={item.path}
                                     variant={active ? "secondary" : "ghost"}
-                                    className="w-full justify-start font-medium text-base"
+                                    className="w-full justify-start font-medium text-base transition-all hover:translate-x-0.5"
                                     onClick={() => navigate(item.path)}
                                 >
-                                    <item.icon className="mr-3 h-5 w-5" />
-                                    {item.label}
+                                    <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                                    <span className="truncate">{item.label}</span>
                                 </Button>
                             );
                         })}
                     </nav>
                 </aside>
 
+                {/* Mobile Sidebar (Overlay) */}
+                {isMobileMenuOpen && (
+                    <>
+                        <div
+                            className="fixed inset-0 bg-black/50 md:hidden z-30"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                        <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-card shadow-lg z-40 overflow-y-auto md:hidden">
+                            <nav className="flex flex-col space-y-1 p-4">
+                                {menuItems.map((item) => {
+                                    const active = isActive(item.path);
+                                    return (
+                                        <Button
+                                            key={item.path}
+                                            variant={active ? "secondary" : "ghost"}
+                                            className="w-full justify-start font-medium text-base transition-all hover:translate-x-0.5"
+                                            onClick={() => {
+                                                navigate(item.path);
+                                                setIsMobileMenuOpen(false);
+                                            }}
+                                        >
+                                            <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                                            <span className="truncate">{item.label}</span>
+                                        </Button>
+                                    );
+                                })}
+                            </nav>
+                        </aside>
+                    </>
+                )}
+
                 {/* Main Content */}
-                <main className="flex-1 md:ml-64 p-4 md:p-6 pb-20">
+                <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
                     {children}
                 </main>
             </div>
 
-            {/* Mobile Bottom Navigation (Chỉ hiển thị 5 mục đầu tiên) */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t z-50 shadow-2xl">
-                <div className="grid grid-cols-5 gap-1 p-1">
+            {/* Mobile Bottom Navigation */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t z-40 shadow-2xl">
+                <div className="grid grid-cols-5 gap-0.5 p-1">
                     {menuItems.slice(0, 5).map((item) => {
                         const active = isActive(item.path);
                         return (
@@ -217,11 +259,11 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
                                 key={item.path}
                                 variant={active ? "secondary" : "ghost"}
                                 size="sm"
-                                className="flex flex-col h-auto py-2 px-1 text-center"
+                                className="flex flex-col h-auto py-2 px-0.5 text-center rounded-sm transition-colors"
                                 onClick={() => navigate(item.path)}
                             >
-                                <item.icon className="h-5 w-5 mb-1 mx-auto" />
-                                <span className="text-xs">{item.label}</span>
+                                <item.icon className="h-5 w-5 mb-1 mx-auto flex-shrink-0" />
+                                <span className="text-xs font-medium line-clamp-2">{item.label}</span>
                             </Button>
                         );
                     })}
