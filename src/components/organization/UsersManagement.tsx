@@ -70,18 +70,18 @@ const UsersManagement = () => {
         return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
     };
 
-    // --- LOGIC TẢI DỮ LIỆU (FIX TÌM KIẾM) ---
+    // --- LOGIC TẢI DỮ LIỆU (FIX TÌM KIẾM & FILTER) ---
     const fetchUsers = useCallback(async () => {
         try {
             setLoading(true);
-            
+
             let query = supabase
                 .from('profiles')
                 .select(`
-                    id, email, first_name, last_name, avatar_url, phone, date_of_birth, gender, 
-                    employment_status, university, major, cv_url, annual_leave_balance,
+                    id, email, first_name, last_name, avatar_url, phone, date_of_birth, gender,
+                    employment_status, university, major, cv_url, annual_leave_balance, account_status,
                     team_id, shift_id,
-                    
+
                     team:teams!profiles_team_id_fkey (name),
                     shift:shifts!profiles_shift_id_fkey (name, start_time, end_time),
                     user_roles (role)
@@ -91,25 +91,44 @@ const UsersManagement = () => {
             // ÁP DỤNG BỘ LỌC TÌM KIẾM
             if (searchTerm) {
                 const searchPattern = `%${searchTerm}%`;
-                // Tìm kiếm theo Họ HOẶC Tên (sử dụng .or() và .ilike() cho không phân biệt chữ hoa/thường)
                 query = query.or(
                     `first_name.ilike.${searchPattern},last_name.ilike.${searchPattern},email.ilike.${searchPattern}`
                 );
             }
 
+            // ÁP DỤNG BỘ LỌC ACCOUNT STATUS
+            if (filterAccountStatus) {
+                query = query.eq('account_status', filterAccountStatus);
+            }
+
+            // ÁP DỤNG BỘ LỌC EMPLOYMENT STATUS
+            if (filterStatus) {
+                query = query.eq('employment_status', filterStatus);
+            }
+
             const { data, error } = await query;
 
             if (error) throw error;
-            
-            setUsers(data as unknown as UserDetail[] || []); 
-            
+
+            let filteredUsers = (data as unknown as UserDetail[] || []);
+
+            // FILTER BY ROLE (CLIENT SIDE vì join phức tạp)
+            if (filterRole) {
+                filteredUsers = filteredUsers.filter(user => {
+                    if (!user.user_roles) return false;
+                    return user.user_roles.some(r => r.role === filterRole);
+                });
+            }
+
+            setUsers(filteredUsers);
+
         } catch (error) {
             console.error('Lỗi tải dữ liệu user:', error);
-            toast({ title: "Lỗi Tải Dữ liệu", description: "Không thể tải danh sách người dùng.", variant: "destructive" }); 
+            toast({ title: "Lỗi Tải Dữ liệu", description: "Không thể tải danh sách người dùng.", variant: "destructive" });
         } finally {
             setLoading(false);
         }
-    }, [toast, searchTerm]); // THÊM searchTerm VÀO DEPENDENCY
+    }, [toast, searchTerm, filterRole, filterStatus, filterAccountStatus]); // THÊM searchTerm VÀO DEPENDENCY
 
     useEffect(() => {
         fetchUsers();
