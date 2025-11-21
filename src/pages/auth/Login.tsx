@@ -15,16 +15,41 @@ import { supabase } from "@/integrations/supabase/client";
 const APP_NAME = "MSC Center - HRM AI";
 const LOGO_PATH = "/LOGO.PNG"; // Đường dẫn đến logo tổ chức
 
+const DEPARTMENTS = [
+    { value: "IT", label: "Công Nghệ Thông Tin" },
+    { value: "HR", label: "Nhân Sự" },
+    { value: "Sales", label: "Bán Hàng" },
+    { value: "Marketing", label: "Marketing" },
+    { value: "Design", label: "Thiết Kế" },
+    { value: "Content", label: "Nội Dung" },
+    { value: "Finance", label: "Tài Chính" },
+];
+
+const EMPLOYMENT_STATUS = [
+    { value: "Employed", label: "Đang Làm Việc" },
+    { value: "Student", label: "Sinh Viên" },
+    { value: "Trainee", label: "Thực Tập Sinh" },
+    { value: "Freelancer", label: "Freelancer" },
+];
+
 const Login = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+
+    // Login state
     const [loginEmail, setLoginEmail] = useState("");
     const [loginPassword, setLoginPassword] = useState("");
+
+    // Signup state
     const [signupEmail, setSignupEmail] = useState("");
     const [signupPassword, setSignupPassword] = useState("");
     const [signupFirstName, setSignupFirstName] = useState("");
     const [signupLastName, setSignupLastName] = useState("");
+    const [signupPhone, setSignupPhone] = useState("");
+    const [signupDepartment, setSignupDepartment] = useState("");
+    const [signupEmploymentStatus, setSignupEmploymentStatus] = useState("");
+    const [cvFile, setCvFile] = useState<File | null>(null);
 
     // --- Logic: Kiểm tra Auth và Redirect ---
     useEffect(() => {
@@ -71,7 +96,7 @@ const Login = () => {
         }
     };
 
-    // --- Xử lý Đăng ký ---
+    // --- X��� lý Đăng ký ---
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
