@@ -104,13 +104,25 @@ const ShiftAttendanceWidget = () => {
         .order('timestamp', { ascending: false })
         .limit(100);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Attendance query error:', error);
+        throw new Error(error.message || 'Failed to load attendance');
+      }
       setAllRecords(data || []);
       calculateStats(data || []);
     } catch (error) {
-      console.error('Error loading attendance:', error);
+      let errorMessage = 'Không thể tải lịch sử chấm công';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.error('Error loading attendance:', errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Lỗi tải chấm công",
+        description: errorMessage
+      });
     }
-  }, [calculateStats]);
+  }, [calculateStats, toast]);
 
   const loadTodayAttendance = useCallback(async (uid: string) => {
     try {
@@ -123,12 +135,24 @@ const ShiftAttendanceWidget = () => {
         .lte('timestamp', `${today}T23:59:59`)
         .order('shift_type');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Today attendance query error:', error);
+        throw new Error(error.message || 'Failed to load today attendance');
+      }
       setTodayRecords(data || []);
     } catch (error) {
-      console.error('Error loading today attendance:', error);
+      let errorMessage = 'Không thể tải chấm công hôm nay';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.error('Error loading today attendance:', errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Lỗi tải chấm công hôm nay",
+        description: errorMessage
+      });
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     const initUser = async () => {
