@@ -260,8 +260,9 @@ export const EnhancedTaskBoard = ({
                             field={fieldInfo}
                             creator={creator}
                             assignee={assignee}
-                            onTaskClick={() => {
-                              // Open task detail dialog
+                            onTaskClick={(clickedTask) => {
+                              setSelectedTask(clickedTask);
+                              setIsTaskDetailOpen(true);
                             }}
                             onStatusChange={handleStatusChange}
                           />
