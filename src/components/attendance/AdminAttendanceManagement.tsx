@@ -366,10 +366,26 @@ const AdminAttendanceManagement = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {records.map(record => (
+                  {records.map(record => {
+                    const isValidDate = (dateString: string | null): boolean => {
+                      if (!dateString) return false;
+                      const date = new Date(dateString);
+                      return date instanceof Date && !isNaN(date.getTime());
+                    };
+
+                    const formatDate = (dateString: string | null, formatStr: string, opts?: any) => {
+                      if (!isValidDate(dateString)) return '---';
+                      try {
+                        return format(new Date(dateString), formatStr, opts);
+                      } catch {
+                        return '---';
+                      }
+                    };
+
+                    return (
                     <tr key={record.id} className="border-b hover:bg-muted/50">
                       <td className="p-2">
-                        {format(new Date(record.attendance_date), 'dd/MM/yyyy', { locale: vi })}
+                        {formatDate(record.attendance_date, 'dd/MM/yyyy', { locale: vi })}
                       </td>
                       <td className="p-2">
                         <div>
@@ -379,10 +395,10 @@ const AdminAttendanceManagement = () => {
                       </td>
                       <td className="p-2 text-sm">{record.team_name || 'N/A'}</td>
                       <td className="p-2">
-                        {record.check_in_time ? format(new Date(record.check_in_time), 'HH:mm') : '---'}
+                        {formatDate(record.check_in_time, 'HH:mm')}
                       </td>
                       <td className="p-2">
-                        {record.check_out_time ? format(new Date(record.check_out_time), 'HH:mm') : '---'}
+                        {formatDate(record.check_out_time, 'HH:mm')}
                       </td>
                       <td className="p-2 text-center font-bold text-green-600">
                         {record.total_hours.toFixed(2)}h
@@ -412,7 +428,8 @@ const AdminAttendanceManagement = () => {
                         </Button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -439,7 +456,17 @@ const AdminAttendanceManagement = () => {
         <AlertDialogContent>
           <AlertDialogTitle>Xóa bản ghi chấm công?</AlertDialogTitle>
           <AlertDialogDescription>
-            Hành động này không thể hoàn tác. Bản ghi chấm công của {recordToDelete?.user_name} ngày {format(new Date(recordToDelete?.attendance_date || ''), 'dd/MM/yyyy')} sẽ bị xóa vĩnh viễn.
+            {(() => {
+              const isValidDate = (dateString: string | null): boolean => {
+                if (!dateString) return false;
+                const date = new Date(dateString);
+                return date instanceof Date && !isNaN(date.getTime());
+              };
+              const dateStr = recordToDelete?.attendance_date && isValidDate(recordToDelete.attendance_date)
+                ? format(new Date(recordToDelete.attendance_date), 'dd/MM/yyyy')
+                : 'chưa xác định';
+              return `Hành động này không thể hoàn tác. Bản ghi chấm công của ${recordToDelete?.user_name} ngày ${dateStr} sẽ bị xóa vĩnh viễn.`;
+            })()}
           </AlertDialogDescription>
           <div className="flex gap-3 justify-end">
             <AlertDialogCancel>Hủy</AlertDialogCancel>
