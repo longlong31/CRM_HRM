@@ -601,20 +601,23 @@ export const KanbanBoard = ({ teamId, userId, users }: KanbanBoardProps) => {
                 </Card>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 auto-rows-max overflow-x-auto min-h-[500px]">
-                    {sortedFields.map(field => (
-                        <KanbanColumn
-                            key={field.id}
-                            field={field}
-                            tasks={getTasksInField(field.id)}
-                            userId={userId}
-                            users={users}
-                            onCreateTask={createTask}
-                            onUpdateTask={updateTask}
-                            onDeleteTask={deleteTask}
-                            onDeleteField={deleteField}
-                            onUpdateField={updateField}
-                        />
-                    ))}
+                    {sortedFields.map(field => {
+                        const fieldTasks = filteredTasks.filter(t => t.field_id === field.id);
+                        return (
+                            <KanbanColumn
+                                key={field.id}
+                                field={field}
+                                tasks={fieldTasks}
+                                userId={userId}
+                                users={users}
+                                onCreateTask={createTask}
+                                onUpdateTask={updateTask}
+                                onDeleteTask={deleteTask}
+                                onDeleteField={deleteField}
+                                onUpdateField={updateField}
+                            />
+                        );
+                    })}
                 </div>
             )}
         </div>
