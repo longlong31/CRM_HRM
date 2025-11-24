@@ -479,7 +479,7 @@ export const KanbanBoard = ({ teamId, userId, users }: KanbanBoardProps) => {
                                 </Button>
                                 <Button type="submit" disabled={isLoading}>
                                     {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                                    Tạo C���t
+                                    Tạo Cột
                                 </Button>
                             </DialogFooter>
                         </form>
