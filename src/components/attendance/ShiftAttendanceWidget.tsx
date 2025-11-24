@@ -362,12 +362,36 @@ const ShiftAttendanceWidget = () => {
             <div className="text-xs md:text-sm space-y-1 bg-muted/50 rounded p-2">
               {shiftRecord?.check_in && (
                 <p className="text-foreground">
-                  <span className="font-medium">Vào:</span> {format(new Date(shiftRecord.check_in), 'HH:mm')}
+                  <span className="font-medium">Vào:</span> {(() => {
+                    const isValidDate = (dateString: string | null): boolean => {
+                      if (!dateString) return false;
+                      const date = new Date(dateString);
+                      return date instanceof Date && !isNaN(date.getTime());
+                    };
+                    if (!isValidDate(shiftRecord.check_in)) return '---';
+                    try {
+                      return format(new Date(shiftRecord.check_in), 'HH:mm');
+                    } catch {
+                      return '---';
+                    }
+                  })()}
                 </p>
               )}
               {shiftRecord?.check_out && (
                 <p className="text-foreground">
-                  <span className="font-medium">Ra:</span> {format(new Date(shiftRecord.check_out), 'HH:mm')}
+                  <span className="font-medium">Ra:</span> {(() => {
+                    const isValidDate = (dateString: string | null): boolean => {
+                      if (!dateString) return false;
+                      const date = new Date(dateString);
+                      return date instanceof Date && !isNaN(date.getTime());
+                    };
+                    if (!isValidDate(shiftRecord.check_out)) return '---';
+                    try {
+                      return format(new Date(shiftRecord.check_out), 'HH:mm');
+                    } catch {
+                      return '---';
+                    }
+                  })()}
                 </p>
               )}
             </div>
@@ -489,6 +513,21 @@ const ShiftAttendanceWidget = () => {
                 <p className="text-center text-muted-foreground py-8">Không có lịch sử chấm công</p>
               ) : (
                 filteredRecords.map((record) => {
+                  const isValidDate = (dateString: string | null): boolean => {
+                    if (!dateString) return false;
+                    const date = new Date(dateString);
+                    return date instanceof Date && !isNaN(date.getTime());
+                  };
+
+                  const formatDate = (dateString: string | null, formatStr: string) => {
+                    if (!isValidDate(dateString)) return '---';
+                    try {
+                      return format(new Date(dateString), formatStr);
+                    } catch {
+                      return '---';
+                    }
+                  };
+
                   const shiftInfo = SHIFT_TIMES[record.shift_type];
                   const statusColor =
                     record.status === 'completed' ? 'bg-green-100 text-green-700' :
@@ -507,14 +546,14 @@ const ShiftAttendanceWidget = () => {
                         <div className="flex items-center gap-2">
                           <p className="font-medium">{shiftInfo.label}</p>
                           <Badge variant="outline" className="text-xs">
-                            {format(new Date(record.date), 'MMM dd')}
+                            {formatDate(record.date, 'MMM dd')}
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {record.check_in && record.check_out
-                            ? `${format(new Date(record.check_in), 'HH:mm')} - ${format(new Date(record.check_out), 'HH:mm')}`
-                            : record.check_in
-                            ? `Vào: ${format(new Date(record.check_in), 'HH:mm')}`
+                          {record.check_in && record.check_out && isValidDate(record.check_in) && isValidDate(record.check_out)
+                            ? `${formatDate(record.check_in, 'HH:mm')} - ${formatDate(record.check_out, 'HH:mm')}`
+                            : record.check_in && isValidDate(record.check_in)
+                            ? `Vào: ${formatDate(record.check_in, 'HH:mm')}`
                             : 'Chưa chấm công'
                           }
                         </p>

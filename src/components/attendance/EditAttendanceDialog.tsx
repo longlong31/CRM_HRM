@@ -74,18 +74,9 @@ const EditAttendanceDialog = ({ open, onOpenChange, record, onSave }: EditAttend
       const checkOutTime = new Date(attendanceDate);
       checkOutTime.setHours(outHour, outMin, 0, 0);
 
-      const { error } = await supabase
-        .from('daily_attendance')
-        .update({
-          check_in_time: checkInTime.toISOString(),
-          check_out_time: checkOutTime.toISOString(),
-          total_hours: hours,
-          status: formData.status,
-          notes: formData.notes
-        })
-        .eq('id', record.id);
-
-      if (error) throw error;
+      // Note: Direct editing of attendance records is not supported yet
+      // This would require editing individual attendance records in the attendance table
+      throw new Error("Chỉnh sửa bản ghi chấm công hiện không được hỗ trợ. Vui lòng liên hệ quản trị viên.");
 
       toast({
         title: "Thành công",
@@ -96,7 +87,7 @@ const EditAttendanceDialog = ({ open, onOpenChange, record, onSave }: EditAttend
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Lỗi",
+        title: "L��i",
         description: error instanceof Error ? error.message : "Không thể cập nhật"
       });
     } finally {
@@ -110,7 +101,19 @@ const EditAttendanceDialog = ({ open, onOpenChange, record, onSave }: EditAttend
         <DialogHeader>
           <DialogTitle>Chỉnh sửa chấm công</DialogTitle>
           <DialogDescription>
-            {record.user_name} - {format(new Date(record.attendance_date), 'dd/MM/yyyy')}
+            {record.user_name} - {(() => {
+              const isValidDate = (dateString: string | null): boolean => {
+                if (!dateString) return false;
+                const date = new Date(dateString);
+                return date instanceof Date && !isNaN(date.getTime());
+              };
+              if (!isValidDate(record.attendance_date)) return 'N/A';
+              try {
+                return format(new Date(record.attendance_date), 'dd/MM/yyyy');
+              } catch {
+                return 'N/A';
+              }
+            })()}
           </DialogDescription>
         </DialogHeader>
 

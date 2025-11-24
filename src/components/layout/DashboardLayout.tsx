@@ -63,17 +63,8 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
                 return;
             }
 
-            // Check registration status
-            const { data: registration } = await supabase
-                .from('user_registrations')
-                .select('status')
-                .eq('user_id', currentUser.id)
-                .single();
-
-            if (registration?.status === 'pending' || registration?.status === 'rejected') {
-                navigate("/auth/pending-approval");
-                return;
-            }
+            // Skip registration check as table doesn't exist
+            // User is assumed to be approved if they can log in
 
             setUser(currentUser);
             const userProfile = await getUserProfile(currentUser.id);

@@ -201,7 +201,6 @@ export const TaskDetailDialog = ({
                   <SelectValue placeholder="No field" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No field</SelectItem>
                   {fields.map(field => (
                     <SelectItem key={field.id} value={field.id}>
                       {field.name}
@@ -252,7 +251,6 @@ export const TaskDetailDialog = ({
                   <SelectValue placeholder="No assignee" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No assignee</SelectItem>
                   {users.map(user => (
                     <SelectItem key={user.id} value={user.id}>
                       <div className="flex items-center gap-2">

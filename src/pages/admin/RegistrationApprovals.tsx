@@ -101,14 +101,14 @@ const RegistrationApprovals = () => {
   const loadRegistrations = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("user_registrations")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      setRegistrations(data || []);
+      // user_registrations table doesn't exist
+      // Show a message that registration approvals are not available
+      toast({
+        variant: "destructive",
+        title: "Không Khả Dụng",
+        description: "Tính năng phê duyệt đăng ký hiện không khả dụng. Vui lòng liên hệ quản trị viên."
+      });
+      setRegistrations([]);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -444,7 +444,7 @@ const RegistrationApprovals = () => {
       <AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Từ Chối Đăng Ký</AlertDialogTitle>
+            <AlertDialogTitle>Từ Chối ��ăng Ký</AlertDialogTitle>
             <AlertDialogDescription>
               Từ chối yêu cầu đăng ký cho {selectedRegistration?.first_name} {selectedRegistration?.last_name}
             </AlertDialogDescription>

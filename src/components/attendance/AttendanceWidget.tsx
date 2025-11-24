@@ -75,7 +75,7 @@ const AttendanceWidget = () => {
       averageHoursPerDay: validDays > 0 ? totalHours / validDays : 0,
       onTimeRate: 95 // Mock for now
     });
-  }, []); // Dependencies rỗng vì không phụ thuộc vào state hay props
+  }, []); // Dependencies rỗng v�� không phụ thuộc vào state hay props
 
   // Hàm tải tất cả các bản ghi (được bọc trong useCallback)
   const loadAllAttendance = useCallback(async (uid: string) => {
@@ -314,11 +314,23 @@ const AttendanceWidget = () => {
               <span>Check In</span>
               {latestCheckIn && (
                 <span className="text-xs opacity-80">
-                  {format(new Date(latestCheckIn.timestamp), 'HH:mm')}
+                  {(() => {
+                    const isValidDate = (dateString: string | null): boolean => {
+                      if (!dateString) return false;
+                      const date = new Date(dateString);
+                      return date instanceof Date && !isNaN(date.getTime());
+                    };
+                    if (!isValidDate(latestCheckIn.timestamp)) return '---';
+                    try {
+                      return format(new Date(latestCheckIn.timestamp), 'HH:mm');
+                    } catch {
+                      return '---';
+                    }
+                  })()}
                 </span>
               )}
             </Button>
-            
+
             <Button
               size="lg"
               variant="outline"
@@ -330,7 +342,20 @@ const AttendanceWidget = () => {
               <span>Check Out</span>
               {todayRecords.find(r => r.type === 'check_out') && (
                 <span className="text-xs opacity-80">
-                  {format(new Date(todayRecords.find(r => r.type === 'check_out')!.timestamp), 'HH:mm')}
+                  {(() => {
+                    const checkOutRecord = todayRecords.find(r => r.type === 'check_out');
+                    const isValidDate = (dateString: string | null): boolean => {
+                      if (!dateString) return false;
+                      const date = new Date(dateString);
+                      return date instanceof Date && !isNaN(date.getTime());
+                    };
+                    if (!checkOutRecord || !isValidDate(checkOutRecord.timestamp)) return '---';
+                    try {
+                      return format(new Date(checkOutRecord.timestamp), 'HH:mm');
+                    } catch {
+                      return '---';
+                    }
+                  })()}
                 </span>
               )}
             </Button>
@@ -356,7 +381,7 @@ const AttendanceWidget = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalDays}</div>
-            <p className="text-xs text-muted-foreground mt-1">Của tháng</p>
+            <p className="text-xs text-muted-foreground mt-1">C��a tháng</p>
           </CardContent>
         </Card>
 
@@ -402,7 +427,23 @@ const AttendanceWidget = () => {
               {allRecords.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">No attendance records yet</p>
               ) : (
-                allRecords.slice(0, 10).map((record) => (
+                allRecords.slice(0, 10).map((record) => {
+                  const isValidDate = (dateString: string | null): boolean => {
+                    if (!dateString) return false;
+                    const date = new Date(dateString);
+                    return date instanceof Date && !isNaN(date.getTime());
+                  };
+
+                  const formatDate = (dateString: string | null, formatStr: string) => {
+                    if (!isValidDate(dateString)) return '---';
+                    try {
+                      return format(new Date(dateString), formatStr);
+                    } catch {
+                      return '---';
+                    }
+                  };
+
+                  return (
                   <div key={record.id} className="flex items-center justify-between p-3 rounded-lg border">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -417,7 +458,7 @@ const AttendanceWidget = () => {
                       <div>
                         <p className="font-medium capitalize">{record.type.replace('_', ' ')}</p>
                         <p className="text-sm text-muted-foreground">
-                          {format(new Date(record.timestamp), 'MMM dd, yyyy · HH:mm')}
+                          {formatDate(record.timestamp, 'MMM dd, yyyy · HH:mm')}
                         </p>
                       </div>
                     </div>
@@ -428,17 +469,40 @@ const AttendanceWidget = () => {
                       </div>
                     )}
                   </div>
-                ))
+                  );
+                })
               )}
             </TabsContent>
 
             <TabsContent value="week" className="space-y-2 mt-4">
               {allRecords
                 .filter(r => {
+                  const isValidDate = (dateString: string | null): boolean => {
+                    if (!dateString) return false;
+                    const date = new Date(dateString);
+                    return date instanceof Date && !isNaN(date.getTime());
+                  };
+                  if (!isValidDate(r.timestamp)) return false;
                   const recordDate = new Date(r.timestamp);
                   return recordDate >= startOfWeek(new Date()) && recordDate <= endOfWeek(new Date());
                 })
-                .map((record) => (
+                .map((record) => {
+                  const isValidDate = (dateString: string | null): boolean => {
+                    if (!dateString) return false;
+                    const date = new Date(dateString);
+                    return date instanceof Date && !isNaN(date.getTime());
+                  };
+
+                  const formatDate = (dateString: string | null, formatStr: string) => {
+                    if (!isValidDate(dateString)) return '---';
+                    try {
+                      return format(new Date(dateString), formatStr);
+                    } catch {
+                      return '---';
+                    }
+                  };
+
+                  return (
                   <div key={record.id} className="flex items-center justify-between p-3 rounded-lg border">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -453,21 +517,44 @@ const AttendanceWidget = () => {
                       <div>
                         <p className="font-medium capitalize">{record.type.replace('_', ' ')}</p>
                         <p className="text-sm text-muted-foreground">
-                          {format(new Date(record.timestamp), 'MMM dd, yyyy · HH:mm')}
+                          {formatDate(record.timestamp, 'MMM dd, yyyy · HH:mm')}
                         </p>
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
             </TabsContent>
 
             <TabsContent value="month" className="space-y-2 mt-4">
               {allRecords
                 .filter(r => {
+                  const isValidDate = (dateString: string | null): boolean => {
+                    if (!dateString) return false;
+                    const date = new Date(dateString);
+                    return date instanceof Date && !isNaN(date.getTime());
+                  };
+                  if (!isValidDate(r.timestamp)) return false;
                   const recordDate = new Date(r.timestamp);
                   return recordDate >= startOfMonth(new Date()) && recordDate <= endOfMonth(new Date());
                 })
-                .map((record) => (
+                .map((record) => {
+                  const isValidDate = (dateString: string | null): boolean => {
+                    if (!dateString) return false;
+                    const date = new Date(dateString);
+                    return date instanceof Date && !isNaN(date.getTime());
+                  };
+
+                  const formatDate = (dateString: string | null, formatStr: string) => {
+                    if (!isValidDate(dateString)) return '---';
+                    try {
+                      return format(new Date(dateString), formatStr);
+                    } catch {
+                      return '---';
+                    }
+                  };
+
+                  return (
                   <div key={record.id} className="flex items-center justify-between p-3 rounded-lg border">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -482,12 +569,13 @@ const AttendanceWidget = () => {
                       <div>
                         <p className="font-medium capitalize">{record.type.replace('_', ' ')}</p>
                         <p className="text-sm text-muted-foreground">
-                          {format(new Date(record.timestamp), 'MMM dd, yyyy · HH:mm')}
+                          {formatDate(record.timestamp, 'MMM dd, yyyy · HH:mm')}
                         </p>
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
             </TabsContent>
 
             <TabsContent value="calendar" className="mt-4">

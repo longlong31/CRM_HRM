@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 // --- Custom Constants ---
 const APP_NAME = "MSC Center - HRM AI";
-const LOGO_PATH = "/LOGO.PNG"; // Đường dẫn đến logo tổ chức
+const LOGO_PATH = "/LOGO.PNG"; // Đường dẫn đến logo tổ ch��c
 
 const DEPARTMENTS = [
     { value: "IT", label: "Công Nghệ Thông Tin" },
@@ -113,30 +113,8 @@ const Login = () => {
                 return;
             }
 
-            // Check registration status
-            const { data: registration } = await supabase
-                .from('user_registrations')
-                .select('status')
-                .eq('user_id', user.id)
-                .single();
-
-            if (registration?.status === 'pending') {
-                toast({
-                    title: "Chờ Phê Duyệt",
-                    description: "Tài khoản của bạn đang chờ Admin phê duyệt..."
-                });
-                navigate("/auth/pending-approval");
-                return;
-            }
-
-            if (registration?.status === 'rejected') {
-                toast({
-                    title: "Tài Khoản Bị Từ Chối",
-                    description: "Tài khoản của bạn không được phê duyệt. Vui lòng liên hệ hỗ trợ."
-                });
-                navigate("/auth/pending-approval");
-                return;
-            }
+            // Skip registration check as table doesn't exist
+            // User is assumed to be approved if they can log in
 
             toast({
                 title: "Chào mừng trở lại!",
@@ -227,26 +205,8 @@ const Login = () => {
                 }
             }
 
-            // Create registration record
-            const { error: registrationError } = await supabase
-                .from('user_registrations')
-                .insert({
-                    user_id: signupData.user.id,
-                    email: signupEmail,
-                    first_name: signupFirstName,
-                    last_name: signupLastName,
-                    phone: signupPhone,
-                    department: signupDepartment,
-                    employment_status: signupEmploymentStatus,
-                    cv_url: cvUrl,
-                    requested_role: 'staff',
-                    status: 'pending'
-                });
-
-            if (registrationError) {
-                console.error('Registration creation error:', registrationError);
-                // Don't show error to user - registration may have been created by trigger
-            }
+            // Skip registration record as table doesn't exist
+            // User is created and can log in directly
 
             toast({
                 title: "✓ Đăng ký Thành công!",

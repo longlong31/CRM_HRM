@@ -77,7 +77,11 @@ const AdminAttendanceManagement = () => {
       setTeams(teamMap);
       setTeamList(data || []);
     } catch (error) {
-      console.error('Error loading teams:', error);
+      try {
+        console.error('Error loading teams:', error instanceof Error ? error.message : 'Unknown error');
+      } catch (e) {
+        console.error('Error loading teams: Unknown error');
+      }
     }
   }, []);
 
@@ -91,23 +95,68 @@ const AdminAttendanceManagement = () => {
       setUsers(userMap);
       setUserList(data || []);
     } catch (error) {
-      console.error('Error loading users:', error);
+      try {
+        console.error('Error loading users:', error instanceof Error ? error.message : 'Unknown error');
+      } catch (e) {
+        console.error('Error loading users: Unknown error');
+      }
     }
   }, []);
 
   const loadRecords = useCallback(async () => {
     setIsLoading(true);
     try {
-      let query = supabase.from('daily_attendance').select('*');
+      // Load attendance records and aggregate into daily summaries
+      const { data: records, error: recordsError } = await supabase.from('attendance').select('*').order('timestamp', { ascending: false });
 
-      if (filterDate) {
-        query = query.eq('attendance_date', filterDate);
-      }
-      if (filterStatus) {
-        query = query.eq('status', filterStatus);
-      }
+      if (recordsError) throw recordsError;
 
-      const { data, error } = await query.order('attendance_date', { ascending: false });
+      // Group records by date
+      const dailyMap = new Map<string, any>();
+
+      (records || []).forEach(record => {
+        const date = record.timestamp.split('T')[0];
+        if (!dailyMap.has(date)) {
+          dailyMap.set(date, {
+            id: `daily-${record.user_id}-${date}`,
+            user_id: record.user_id,
+            attendance_date: date,
+            check_in_time: null,
+            check_out_time: null,
+            total_hours: 0,
+            session_count: 0,
+            status: 'absent',
+            notes: null,
+            created_at: record.created_at
+          });
+        }
+
+        const daily = dailyMap.get(date)!;
+        if (record.type === 'check_in') {
+          if (!daily.check_in_time) {
+            daily.check_in_time = record.timestamp;
+          }
+          daily.session_count += 1;
+        } else if (record.type === 'check_out') {
+          daily.check_out_time = record.timestamp;
+        }
+      });
+
+      const data = Array.from(dailyMap.values()).map(daily => {
+        if (daily.check_in_time && daily.check_out_time) {
+          const inTime = new Date(daily.check_in_time).getTime();
+          const outTime = new Date(daily.check_out_time).getTime();
+          daily.total_hours = (outTime - inTime) / (1000 * 60 * 60);
+          daily.status = 'present';
+        }
+        return daily;
+      }).filter(record => {
+        if (filterDate && record.attendance_date !== filterDate) return false;
+        if (filterStatus && record.status !== filterStatus) return false;
+        return true;
+      }).sort((a, b) => new Date(b.attendance_date).getTime() - new Date(a.attendance_date).getTime());
+
+      const error = null;
       if (error) throw error;
 
       // Join with user and team data
@@ -136,7 +185,11 @@ const AdminAttendanceManagement = () => {
 
       setRecords(enrichedRecords);
     } catch (error) {
-      console.error('Error loading records:', error);
+      try {
+        console.error('Error loading records:', error instanceof Error ? error.message : 'Unknown error');
+      } catch (e) {
+        console.error('Error loading records: Unknown error');
+      }
       toast({
         variant: "destructive",
         title: "Lỗi",
@@ -160,26 +213,14 @@ const AdminAttendanceManagement = () => {
     if (!recordToDelete) return;
 
     try {
-      const { error } = await supabase
-        .from('daily_attendance')
-        .delete()
-        .eq('id', recordToDelete.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Thành công",
-        description: "Đã xóa bản ghi chấm công"
-      });
-
-      setRecordToDelete(null);
-      await loadRecords();
-    } catch (error) {
       toast({
         variant: "destructive",
-        title: "Lỗi",
-        description: error instanceof Error ? error.message : "Không thể xóa bản ghi"
+        title: "Không thể xóa",
+        description: "Chức năng xóa bản ghi chấm công hiện không khả dụng. Vui lòng liên hệ quản trị viên."
       });
+      setRecordToDelete(null);
+    } catch (error) {
+      console.error('Error:', error);
     }
   };
 
@@ -193,14 +234,20 @@ const AdminAttendanceManagement = () => {
       return;
     }
 
+    const isValidDate = (dateString: string | null): boolean => {
+      if (!dateString) return false;
+      const date = new Date(dateString);
+      return date instanceof Date && !isNaN(date.getTime());
+    };
+
     const headers = ['Ngày', 'Nhân viên', 'Email', 'Phòng ban', 'Giờ vào', 'Giờ ra', 'Tổng giờ', 'Trạng thái'];
     const rows = records.map(r => [
-      format(new Date(r.attendance_date), 'dd/MM/yyyy'),
+      isValidDate(r.attendance_date) ? format(new Date(r.attendance_date), 'dd/MM/yyyy') : 'N/A',
       r.user_name,
       r.user_email,
       r.team_name || 'N/A',
-      r.check_in_time ? format(new Date(r.check_in_time), 'HH:mm') : '',
-      r.check_out_time ? format(new Date(r.check_out_time), 'HH:mm') : '',
+      r.check_in_time && isValidDate(r.check_in_time) ? format(new Date(r.check_in_time), 'HH:mm') : '',
+      r.check_out_time && isValidDate(r.check_out_time) ? format(new Date(r.check_out_time), 'HH:mm') : '',
       r.total_hours.toFixed(2),
       r.status
     ]);
@@ -263,7 +310,7 @@ const AdminAttendanceManagement = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             {/* Search */}
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Tìm tên/email</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">T��m tên/email</label>
               <Input
                 placeholder="Nhập tên hoặc email..."
                 value={searchText}
@@ -284,12 +331,11 @@ const AdminAttendanceManagement = () => {
             {/* Team Filter */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Phòng ban</label>
-              <Select value={filterTeam} onValueChange={setFilterTeam}>
+              <Select value={filterTeam || ""} onValueChange={setFilterTeam}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tất cả" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tất cả</SelectItem>
                   {teamList.map(team => (
                     <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                   ))}
@@ -300,12 +346,11 @@ const AdminAttendanceManagement = () => {
             {/* Status Filter */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Trạng thái</label>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <Select value={filterStatus || ""} onValueChange={setFilterStatus}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tất cả" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tất cả</SelectItem>
                   <SelectItem value="present">Có công</SelectItem>
                   <SelectItem value="absent">Vắng</SelectItem>
                   <SelectItem value="leave">Nghỉ phép</SelectItem>
@@ -360,10 +405,26 @@ const AdminAttendanceManagement = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {records.map(record => (
+                  {records.map(record => {
+                    const isValidDate = (dateString: string | null): boolean => {
+                      if (!dateString) return false;
+                      const date = new Date(dateString);
+                      return date instanceof Date && !isNaN(date.getTime());
+                    };
+
+                    const formatDate = (dateString: string | null, formatStr: string, opts?: any) => {
+                      if (!isValidDate(dateString)) return '---';
+                      try {
+                        return format(new Date(dateString), formatStr, opts);
+                      } catch {
+                        return '---';
+                      }
+                    };
+
+                    return (
                     <tr key={record.id} className="border-b hover:bg-muted/50">
                       <td className="p-2">
-                        {format(new Date(record.attendance_date), 'dd/MM/yyyy', { locale: vi })}
+                        {formatDate(record.attendance_date, 'dd/MM/yyyy', { locale: vi })}
                       </td>
                       <td className="p-2">
                         <div>
@@ -373,10 +434,10 @@ const AdminAttendanceManagement = () => {
                       </td>
                       <td className="p-2 text-sm">{record.team_name || 'N/A'}</td>
                       <td className="p-2">
-                        {record.check_in_time ? format(new Date(record.check_in_time), 'HH:mm') : '---'}
+                        {formatDate(record.check_in_time, 'HH:mm')}
                       </td>
                       <td className="p-2">
-                        {record.check_out_time ? format(new Date(record.check_out_time), 'HH:mm') : '---'}
+                        {formatDate(record.check_out_time, 'HH:mm')}
                       </td>
                       <td className="p-2 text-center font-bold text-green-600">
                         {record.total_hours.toFixed(2)}h
@@ -406,7 +467,8 @@ const AdminAttendanceManagement = () => {
                         </Button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -433,7 +495,17 @@ const AdminAttendanceManagement = () => {
         <AlertDialogContent>
           <AlertDialogTitle>Xóa bản ghi chấm công?</AlertDialogTitle>
           <AlertDialogDescription>
-            Hành động này không thể hoàn tác. Bản ghi chấm công của {recordToDelete?.user_name} ngày {format(new Date(recordToDelete?.attendance_date || ''), 'dd/MM/yyyy')} sẽ bị xóa vĩnh viễn.
+            {(() => {
+              const isValidDate = (dateString: string | null): boolean => {
+                if (!dateString) return false;
+                const date = new Date(dateString);
+                return date instanceof Date && !isNaN(date.getTime());
+              };
+              const dateStr = recordToDelete?.attendance_date && isValidDate(recordToDelete.attendance_date)
+                ? format(new Date(recordToDelete.attendance_date), 'dd/MM/yyyy')
+                : 'chưa xác định';
+              return `Hành động này không thể hoàn tác. Bản ghi chấm công của ${recordToDelete?.user_name} ngày ${dateStr} sẽ bị xóa vĩnh viễn.`;
+            })()}
           </AlertDialogDescription>
           <div className="flex gap-3 justify-end">
             <AlertDialogCancel>Hủy</AlertDialogCancel>

@@ -107,39 +107,90 @@ const DailyAttendanceWidget = () => {
   const loadTodaySessions = useCallback(async (uid: string) => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      
-      const { data: sessions, error: sessionsError } = await supabase
-        .from('attendance_sessions')
+      const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
+
+      const { data: records, error: recordsError } = await supabase
+        .from('attendance')
         .select('*')
         .eq('user_id', uid)
-        .eq('session_date', today)
-        .order('check_in', { ascending: false });
+        .gte('timestamp', `${today}T00:00:00`)
+        .lt('timestamp', `${tomorrow}T00:00:00`)
+        .order('timestamp', { ascending: true });
 
-      if (sessionsError) throw new Error(sessionsError.message);
-      
-      setTodaySessions(sessions || []);
-      
-      // Check if any session is unclosed
-      const unclosed = sessions?.some(s => !s.check_out);
-      setHasUnclosedSession(!!unclosed);
+      if (recordsError) throw new Error(recordsError.message);
 
-      // Load daily record
-      const { data: dailyData, error: dailyError } = await supabase
-        .from('daily_attendance')
-        .select('*')
-        .eq('user_id', uid)
-        .eq('attendance_date', today)
-        .single();
+      // Group records into sessions (check_in followed by check_out)
+      const sessions: any[] = [];
+      let currentSession: any = null;
 
-      if (dailyError && dailyError.code !== 'PGRST116') {
-        throw new Error(dailyError.message);
+      (records || []).forEach(record => {
+        if (record.type === 'check_in') {
+          if (currentSession) {
+            sessions.push(currentSession);
+          }
+          currentSession = {
+            id: record.id,
+            user_id: record.user_id,
+            check_in: record.timestamp,
+            check_out: null,
+            location_checkin: record.location,
+            location_checkout: null,
+            notes: record.notes
+          };
+        } else if (record.type === 'check_out' && currentSession) {
+          currentSession.check_out = record.timestamp;
+          currentSession.location_checkout = record.location;
+          sessions.push(currentSession);
+          currentSession = null;
+        }
+      });
+
+      // Add unclosed session if exists
+      if (currentSession) {
+        sessions.push(currentSession);
       }
 
-      setTodayRecord(dailyData || null);
+      setTodaySessions(sessions);
+
+      // Check if any session is unclosed
+      const unclosed = sessions.some(s => !s.check_out);
+      setHasUnclosedSession(unclosed);
+
+      // Calculate daily summary
+      const totalHours = sessions.reduce((sum, session) => {
+        if (session.check_in && session.check_out) {
+          const inTime = new Date(session.check_in).getTime();
+          const outTime = new Date(session.check_out).getTime();
+          return sum + (outTime - inTime) / (1000 * 60 * 60);
+        }
+        return sum;
+      }, 0);
+
+      if (sessions.length > 0) {
+        setTodayRecord({
+          id: `daily-${uid}-${today}`,
+          user_id: uid,
+          attendance_date: today,
+          check_in_time: sessions[0].check_in,
+          check_out_time: sessions[sessions.length - 1].check_out,
+          total_hours: totalHours,
+          session_count: sessions.length,
+          status: 'present',
+          notes: null,
+          created_at: new Date().toISOString()
+        });
+      } else {
+        setTodayRecord(null);
+      }
     } catch (error) {
       let errorMessage = 'Không thể tải chấm công hôm nay';
-      if (error instanceof Error) {
-        errorMessage = error.message;
+      try {
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+      } catch (e) {
+        // Error object might not be accessible due to response streaming issues
+        console.error('Could not access error message:', e);
       }
       console.error('Error loading today sessions:', errorMessage);
     }
@@ -147,20 +198,73 @@ const DailyAttendanceWidget = () => {
 
   const loadAllRecords = useCallback(async (uid: string) => {
     try {
-      const { data, error } = await supabase
-        .from('daily_attendance')
+      // Load 90 days of attendance records
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+      const startDate = ninetyDaysAgo.toISOString();
+
+      const { data: records, error } = await supabase
+        .from('attendance')
         .select('*')
         .eq('user_id', uid)
-        .order('attendance_date', { ascending: false })
-        .limit(90);
+        .gte('timestamp', startDate)
+        .order('timestamp', { ascending: false });
 
       if (error) throw new Error(error.message);
-      setAllRecords(data || []);
-      calculateStats(data || []);
+
+      // Group records by date and create daily summaries
+      const dailyMap = new Map<string, any>();
+
+      (records || []).forEach(record => {
+        const date = record.timestamp.split('T')[0];
+        if (!dailyMap.has(date)) {
+          dailyMap.set(date, {
+            id: `daily-${uid}-${date}`,
+            user_id: uid,
+            attendance_date: date,
+            check_in_time: null,
+            check_out_time: null,
+            total_hours: 0,
+            session_count: 0,
+            status: 'absent',
+            notes: null,
+            created_at: record.created_at
+          });
+        }
+
+        const daily = dailyMap.get(date)!;
+        if (record.type === 'check_in') {
+          if (!daily.check_in_time) {
+            daily.check_in_time = record.timestamp;
+          }
+          daily.session_count += 1;
+        } else if (record.type === 'check_out') {
+          daily.check_out_time = record.timestamp;
+        }
+      });
+
+      // Calculate hours and determine status
+      const dailyRecords = Array.from(dailyMap.values()).map(daily => {
+        if (daily.check_in_time && daily.check_out_time) {
+          const inTime = new Date(daily.check_in_time).getTime();
+          const outTime = new Date(daily.check_out_time).getTime();
+          daily.total_hours = (outTime - inTime) / (1000 * 60 * 60);
+          daily.status = 'present';
+        }
+        return daily;
+      });
+
+      setAllRecords(dailyRecords);
+      calculateStats(dailyRecords);
     } catch (error) {
       let errorMessage = 'Không thể tải lịch sử chấm công';
-      if (error instanceof Error) {
-        errorMessage = error.message;
+      try {
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+      } catch (e) {
+        // Error object might not be accessible due to response streaming issues
+        console.error('Could not access error message:', e);
       }
       console.error('Error loading attendance records:', errorMessage);
     }
@@ -253,15 +357,16 @@ const DailyAttendanceWidget = () => {
 
       // Find the unclosed session
       const unclosedSession = todaySessions.find(s => !s.check_out);
-      if (!unclosedSession) throw new Error("Không tìm thấy phiên làm việc");
+      if (!unclosedSession) throw new Error("Không tìm thấy phi��n làm việc");
 
       const { error } = await supabase
-        .from('attendance_sessions')
-        .update({
-          check_out: checkOutTime,
-          location_checkout: location
-        })
-        .eq('id', unclosedSession.id);
+        .from('attendance')
+        .insert({
+          user_id: userId,
+          timestamp: checkOutTime,
+          type: 'check_out',
+          location: location
+        });
 
       if (error) throw new Error(error.message);
 
@@ -348,13 +453,37 @@ const DailyAttendanceWidget = () => {
               <div>
                 <p className="text-xs text-muted-foreground">Giờ vào</p>
                 <p className="text-lg font-semibold text-foreground">
-                  {todayRecord.check_in_time ? format(new Date(todayRecord.check_in_time), 'HH:mm') : '---'}
+                  {(() => {
+                    const isValidDate = (dateString: string | null): boolean => {
+                      if (!dateString) return false;
+                      const date = new Date(dateString);
+                      return date instanceof Date && !isNaN(date.getTime());
+                    };
+                    if (!isValidDate(todayRecord.check_in_time)) return '---';
+                    try {
+                      return format(new Date(todayRecord.check_in_time!), 'HH:mm');
+                    } catch {
+                      return '---';
+                    }
+                  })()}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Giờ ra</p>
                 <p className="text-lg font-semibold text-foreground">
-                  {todayRecord.check_out_time ? format(new Date(todayRecord.check_out_time), 'HH:mm') : '---'}
+                  {(() => {
+                    const isValidDate = (dateString: string | null): boolean => {
+                      if (!dateString) return false;
+                      const date = new Date(dateString);
+                      return date instanceof Date && !isNaN(date.getTime());
+                    };
+                    if (!isValidDate(todayRecord.check_out_time)) return '---';
+                    try {
+                      return format(new Date(todayRecord.check_out_time!), 'HH:mm');
+                    } catch {
+                      return '---';
+                    }
+                  })()}
                 </p>
               </div>
               <div className="col-span-2">
@@ -370,17 +499,32 @@ const DailyAttendanceWidget = () => {
               <p className="text-sm font-semibold text-muted-foreground">Phiên làm việc ({todaySessions.length})</p>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {todaySessions.map((session, idx) => {
-                  const sessionHours = session.check_out
+                  const isValidDate = (dateString: string | null): boolean => {
+                    if (!dateString) return false;
+                    const date = new Date(dateString);
+                    return date instanceof Date && !isNaN(date.getTime());
+                  };
+
+                  const formatDate = (dateString: string | null, formatStr: string) => {
+                    if (!isValidDate(dateString)) return '---';
+                    try {
+                      return format(new Date(dateString), formatStr);
+                    } catch {
+                      return '---';
+                    }
+                  };
+
+                  const sessionHours = session.check_out && isValidDate(session.check_out) && isValidDate(session.check_in)
                     ? (new Date(session.check_out).getTime() - new Date(session.check_in).getTime()) / (1000 * 60 * 60)
                     : null;
-                  
+
                   return (
                     <div key={session.id} className="flex items-center justify-between p-2 rounded-lg bg-background text-xs border">
                       <div className="flex-1">
                         <p className="font-semibold">Phiên #{idx + 1}</p>
                         <p className="text-muted-foreground">
-                          {format(new Date(session.check_in), 'HH:mm')} 
-                          {session.check_out && ` → ${format(new Date(session.check_out), 'HH:mm')}`}
+                          {formatDate(session.check_in, 'HH:mm')}
+                          {session.check_out && ` → ${formatDate(session.check_out, 'HH:mm')}`}
                         </p>
                         {!session.check_out && <Badge className="mt-1">Đang làm</Badge>}
                       </div>
@@ -463,13 +607,28 @@ const DailyAttendanceWidget = () => {
                 <p className="text-center text-muted-foreground py-8">Không có lịch sử chấm công</p>
               ) : (
                 filteredRecords.map((record) => {
-                  const statusColor = 
+                  const isValidDate = (dateString: string | null): boolean => {
+                    if (!dateString) return false;
+                    const date = new Date(dateString);
+                    return date instanceof Date && !isNaN(date.getTime());
+                  };
+
+                  const formatDate = (dateString: string | null, formatStr: string, opts?: any) => {
+                    if (!isValidDate(dateString)) return '---';
+                    try {
+                      return format(new Date(dateString), formatStr, opts);
+                    } catch {
+                      return '---';
+                    }
+                  };
+
+                  const statusColor =
                     record.status === 'present' ? 'bg-green-100 text-green-700' :
                     record.status === 'absent' ? 'bg-red-100 text-red-700' :
                     record.status === 'leave' ? 'bg-blue-100 text-blue-700' :
                     record.status === 'late' ? 'bg-yellow-100 text-yellow-700' :
                     'bg-gray-100 text-gray-700';
-                  const statusText = 
+                  const statusText =
                     record.status === 'present' ? 'Có công' :
                     record.status === 'absent' ? 'Vắng' :
                     record.status === 'leave' ? 'Nghỉ phép' :
@@ -480,13 +639,13 @@ const DailyAttendanceWidget = () => {
                     <div key={record.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-sm">{format(new Date(record.attendance_date), 'EEEE, dd/MM', { locale: vi })}</p>
+                          <p className="font-semibold text-sm">{formatDate(record.attendance_date, 'EEEE, dd/MM', { locale: vi })}</p>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {record.check_in_time && record.check_out_time
-                            ? `${format(new Date(record.check_in_time), 'HH:mm')} → ${format(new Date(record.check_out_time), 'HH:mm')}`
-                            : record.check_in_time
-                            ? `Vào: ${format(new Date(record.check_in_time), 'HH:mm')}`
+                          {record.check_in_time && record.check_out_time && isValidDate(record.check_in_time) && isValidDate(record.check_out_time)
+                            ? `${formatDate(record.check_in_time, 'HH:mm')} → ${formatDate(record.check_out_time, 'HH:mm')}`
+                            : record.check_in_time && isValidDate(record.check_in_time)
+                            ? `Vào: ${formatDate(record.check_in_time, 'HH:mm')}`
                             : 'Không có dữ liệu'
                           }
                         </p>

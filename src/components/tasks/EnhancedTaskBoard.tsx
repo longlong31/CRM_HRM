@@ -179,7 +179,6 @@ export const EnhancedTaskBoard = ({
                         <SelectValue placeholder="All Fields" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Fields</SelectItem>
                         {fields.map(field => (
                           <SelectItem key={field.id} value={field.id}>
                             {field.name}
@@ -199,7 +198,6 @@ export const EnhancedTaskBoard = ({
                         <SelectValue placeholder="All Priorities" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Priorities</SelectItem>
                         <SelectItem value="low">Low</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                         <SelectItem value="high">High</SelectItem>
@@ -456,7 +454,6 @@ const CreateTaskDialog = ({
                 <SelectValue placeholder="Select a field" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No field</SelectItem>
                 {fields.map(field => (
                   <SelectItem key={field.id} value={field.id}>
                     {field.name}
