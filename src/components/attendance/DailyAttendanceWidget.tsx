@@ -294,7 +294,7 @@ const DailyAttendanceWidget = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'attendance_sessions',
+          table: 'attendance',
           filter: `user_id=eq.${userId}`
         },
         () => {
