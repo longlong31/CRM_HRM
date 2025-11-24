@@ -360,12 +360,13 @@ const DailyAttendanceWidget = () => {
       if (!unclosedSession) throw new Error("Không tìm thấy phi��n làm việc");
 
       const { error } = await supabase
-        .from('attendance_sessions')
-        .update({
-          check_out: checkOutTime,
-          location_checkout: location
-        })
-        .eq('id', unclosedSession.id);
+        .from('attendance')
+        .insert({
+          user_id: userId,
+          timestamp: checkOutTime,
+          type: 'check_out',
+          location: location
+        });
 
       if (error) throw new Error(error.message);
 
