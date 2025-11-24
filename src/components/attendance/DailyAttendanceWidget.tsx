@@ -107,35 +107,81 @@ const DailyAttendanceWidget = () => {
   const loadTodaySessions = useCallback(async (uid: string) => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      
-      const { data: sessions, error: sessionsError } = await supabase
-        .from('attendance_sessions')
+      const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
+
+      const { data: records, error: recordsError } = await supabase
+        .from('attendance')
         .select('*')
         .eq('user_id', uid)
-        .eq('session_date', today)
-        .order('check_in', { ascending: false });
+        .gte('timestamp', `${today}T00:00:00`)
+        .lt('timestamp', `${tomorrow}T00:00:00`)
+        .order('timestamp', { ascending: true });
 
-      if (sessionsError) throw new Error(sessionsError.message);
-      
-      setTodaySessions(sessions || []);
-      
-      // Check if any session is unclosed
-      const unclosed = sessions?.some(s => !s.check_out);
-      setHasUnclosedSession(!!unclosed);
+      if (recordsError) throw new Error(recordsError.message);
 
-      // Load daily record
-      const { data: dailyData, error: dailyError } = await supabase
-        .from('daily_attendance')
-        .select('*')
-        .eq('user_id', uid)
-        .eq('attendance_date', today)
-        .single();
+      // Group records into sessions (check_in followed by check_out)
+      const sessions: any[] = [];
+      let currentSession: any = null;
 
-      if (dailyError && dailyError.code !== 'PGRST116') {
-        throw new Error(dailyError.message);
+      (records || []).forEach(record => {
+        if (record.type === 'check_in') {
+          if (currentSession) {
+            sessions.push(currentSession);
+          }
+          currentSession = {
+            id: record.id,
+            user_id: record.user_id,
+            check_in: record.timestamp,
+            check_out: null,
+            location_checkin: record.location,
+            location_checkout: null,
+            notes: record.notes
+          };
+        } else if (record.type === 'check_out' && currentSession) {
+          currentSession.check_out = record.timestamp;
+          currentSession.location_checkout = record.location;
+          sessions.push(currentSession);
+          currentSession = null;
+        }
+      });
+
+      // Add unclosed session if exists
+      if (currentSession) {
+        sessions.push(currentSession);
       }
 
-      setTodayRecord(dailyData || null);
+      setTodaySessions(sessions);
+
+      // Check if any session is unclosed
+      const unclosed = sessions.some(s => !s.check_out);
+      setHasUnclosedSession(unclosed);
+
+      // Calculate daily summary
+      const totalHours = sessions.reduce((sum, session) => {
+        if (session.check_in && session.check_out) {
+          const inTime = new Date(session.check_in).getTime();
+          const outTime = new Date(session.check_out).getTime();
+          return sum + (outTime - inTime) / (1000 * 60 * 60);
+        }
+        return sum;
+      }, 0);
+
+      if (sessions.length > 0) {
+        setTodayRecord({
+          id: `daily-${uid}-${today}`,
+          user_id: uid,
+          attendance_date: today,
+          check_in_time: sessions[0].check_in,
+          check_out_time: sessions[sessions.length - 1].check_out,
+          total_hours: totalHours,
+          session_count: sessions.length,
+          status: 'present',
+          notes: null,
+          created_at: new Date().toISOString()
+        });
+      } else {
+        setTodayRecord(null);
+      }
     } catch (error) {
       let errorMessage = 'Không thể tải chấm công hôm nay';
       try {
