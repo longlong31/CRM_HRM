@@ -197,8 +197,9 @@ const UsersManagement = () => {
             setSelectedShift('');
             await fetchUsers();
         } catch (error) {
-            console.error("Lỗi cập nhật:", error);
-            toast({ variant: "destructive", title: "Lỗi cập nhật", description: (error as Error).message, });
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error("Lỗi cập nhật:", errorMessage);
+            toast({ variant: "destructive", title: "Lỗi cập nhật", description: errorMessage });
         } finally {
             setLoading(false);
         }
@@ -319,8 +320,9 @@ const UsersManagement = () => {
             resetFormData();
             await fetchUsers();
         } catch (error) {
-            console.error("Lỗi cập nhật user:", error);
-            toast({ variant: "destructive", title: "Lỗi cập nhật user", description: (error as Error).message });
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error("Lỗi cập nhật user:", errorMessage);
+            toast({ variant: "destructive", title: "Lỗi cập nhật user", description: errorMessage });
         } finally {
             setLoading(false);
         }
@@ -889,7 +891,7 @@ const UsersManagement = () => {
                         </div>
 
                         <div>
-                            <Label htmlFor="edit-phone">Số điện thoại *</Label>
+                            <Label htmlFor="edit-phone">Số điện tho��i *</Label>
                             <Input
                                 id="edit-phone"
                                 type="tel"
