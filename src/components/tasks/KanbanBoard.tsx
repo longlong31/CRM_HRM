@@ -22,7 +22,7 @@ import {
     DialogTrigger,
     DialogFooter, // Thêm DialogFooter
 } from '@/components/ui/dialog';
-import { Plus, Trash2, Edit2, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader2, AlertCircle, Search, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 
