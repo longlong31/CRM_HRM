@@ -67,6 +67,34 @@ export const signUp = async (email: string, password: string, metadata?: any) =>
       data: metadata
     }
   });
+
+  // Create profile record if signup successful
+  if (!error && data.user) {
+    try {
+      await supabase.from('profiles').insert({
+        id: data.user.id,
+        email: email,
+        first_name: metadata?.first_name || null,
+        last_name: metadata?.last_name || null,
+        phone: metadata?.phone || null,
+        employment_status: metadata?.employment_status || null,
+        date_of_birth: null,
+        gender: null,
+        university: null,
+        major: null,
+        degree: null,
+        avatar_url: null,
+        cv_url: null,
+        team_id: null,
+        shift_id: null,
+        annual_leave_balance: 0,
+      });
+    } catch (profileError) {
+      console.error('Error creating profile:', profileError);
+      // Don't return error as user was created successfully
+    }
+  }
+
   return { data, error };
 };
 
