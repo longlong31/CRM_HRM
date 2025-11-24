@@ -211,23 +211,15 @@ const Login = () => {
                 }
             }
 
-            // Skip registration record as table doesn't exist
-            // User is created and can log in directly
-
             toast({
                 title: "✓ Đăng ký Thành công!",
-                description: "Tài khoản của bạn đã được tạo. Vui lòng đăng nhập để chờ Admin phê duyệt."
+                description: "Tài khoản của bạn đã được tạo. Đang chuyển hướng..."
             });
 
-            // Clear signup form
-            setSignupFirstName("");
-            setSignupLastName("");
-            setSignupEmail("");
-            setSignupPassword("");
-            setSignupPhone("");
-            setSignupDepartment("");
-            setSignupEmploymentStatus("");
-            setCvFile(null);
+            // Redirect to pending approval page
+            setTimeout(() => {
+                navigate("/auth/pending-approval");
+            }, 1500);
 
         } catch (error: any) {
             toast({
