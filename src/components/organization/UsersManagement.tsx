@@ -546,8 +546,7 @@ const UsersManagement = () => {
                                             onClick={() => {
                                                 setSelectedUserForRole(user);
                                                 setSelectedNewRole(getPrimaryRole(user.user_roles).toLowerCase());
-                                                // Đặt giá trị team và shift hiện tại vào state modal
-                                                setSelectedTeam(user.team_id || 'none'); 
+                                                setSelectedTeam(user.team_id || 'none');
                                                 setSelectedShift(user.shift_id || 'none');
                                                 setIsRoleModalOpen(true);
                                             }}
@@ -555,6 +554,24 @@ const UsersManagement = () => {
                                             Gán Vai trò & Vị trí
                                         </Button>
                                     )}
+
+                                    {/* Chỉnh sửa */}
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => openEditDialog(user)}
+                                    >
+                                        <Edit className="h-4 w-4 mr-1" /> Chỉnh sửa
+                                    </Button>
+
+                                    {/* Xóa */}
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => handleDeleteUser(user)}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
                                 </div>
                             </div>
                         </TableCell>
