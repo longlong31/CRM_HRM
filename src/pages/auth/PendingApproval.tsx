@@ -55,16 +55,18 @@ const PendingApproval = () => {
     setIsRefreshing(true);
     const currentUser = await getCurrentUser();
     if (currentUser) {
-      const { data } = await supabase
-        .from('user_registrations')
-        .select('status, created_at, rejection_reason, reapplication_count')
-        .eq('user_id', currentUser.id)
-        .single();
+      const userProfile = await getUserProfile(currentUser.id);
+      setProfile(userProfile);
 
-      if (data && data.status === 'approved') {
+      if (userProfile?.account_status === 'APPROVED') {
         navigate('/dashboard');
-      } else if (data) {
-        setRegistration(data);
+      } else if (userProfile) {
+        setRegistration({
+          status: userProfile.account_status === 'REJECTED' ? 'rejected' : 'pending',
+          created_at: userProfile.created_at || new Date().toISOString(),
+          rejection_reason: undefined,
+          reapplication_count: 0
+        });
       }
     }
     setIsRefreshing(false);
@@ -168,7 +170,7 @@ const PendingApproval = () => {
                       Thông Báo Email
                     </h4>
                     <p className="text-sm text-orange-800 dark:text-orange-200">
-                      Chúng tôi sẽ gửi email cho bạn khi tài khoản được phê duyệt. Hãy chắc chắn kiểm tra cả thư mục Spam.
+                      Chúng tôi sẽ gửi email cho bạn khi tài khoản được phê duyệt. Hãy chắc chắn kiểm tra cả thư m��c Spam.
                     </p>
                   </div>
                 </div>
