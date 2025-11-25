@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
 
-// --- Định nghĩa ki���u dữ liệu ---
+// --- Định nghĩa kiểu dữ liệu ---
 
 interface CurrentUser { id: string; email?: string | null; }
 interface UserProfile { full_name: string; avatar_url: string | null; }
@@ -37,7 +37,7 @@ interface DashboardLayoutProps {
     onTasksSectionChange?: (section: string) => void;
 }
 
-const DashboardLayout = ({ children, role = 'staff', organizationSection, onOrganizationSectionChange }: DashboardLayoutProps) => {
+const DashboardLayout = ({ children, role = 'staff', organizationSection, onOrganizationSectionChange, tasksSection, onTasksSectionChange }: DashboardLayoutProps) => {
     const navigate = useNavigate();
     const { toast } = useToast();
     const [user, setUser] = useState<CurrentUser | null>(null);
@@ -46,11 +46,19 @@ const DashboardLayout = ({ children, role = 'staff', organizationSection, onOrga
     const [isDark, setIsDark] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [expandedOrg, setExpandedOrgState] = useState(organizationSection || 'teams');
+    const [expandedTasks, setExpandedTasksState] = useState(tasksSection || 'board');
 
     const setExpandedOrg = (value: string) => {
         setExpandedOrgState(value);
         if (onOrganizationSectionChange) {
             onOrganizationSectionChange(value);
+        }
+    };
+
+    const setExpandedTasks = (value: string) => {
+        setExpandedTasksState(value);
+        if (onTasksSectionChange) {
+            onTasksSectionChange(value);
         }
     };
 
