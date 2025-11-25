@@ -239,18 +239,21 @@ const Settings = () => {
     try {
       setThemeLoading(true);
 
-      // Update in database
+      // Update in database (non-blocking - proceed even if DB update fails)
       const { error } = await supabase
         .from('profiles')
         .update({ theme_preference: newTheme })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (error && !error.message?.includes('theme_preference')) {
+        // Ignore if theme_preference column doesn't exist - just use localStorage
+        console.warn('Database theme update skipped:', error.message);
+      }
 
-      // Update localStorage
+      // Update localStorage (always works)
       localStorage.setItem('theme', newTheme);
 
-      // Apply theme
+      // Apply theme immediately
       setThemePreference(newTheme);
       applyTheme(newTheme);
 
