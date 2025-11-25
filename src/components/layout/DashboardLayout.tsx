@@ -43,7 +43,14 @@ const DashboardLayout = ({ children, role = 'staff', organizationSection, onOrga
     const [userRole, setUserRole] = useState<UserRole>(role);
     const [isDark, setIsDark] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [expandedOrg, setExpandedOrg] = useState(organizationSection || 'teams');
+    const [expandedOrg, setExpandedOrgState] = useState(organizationSection || 'teams');
+
+    const setExpandedOrg = (value: string) => {
+        setExpandedOrgState(value);
+        if (onOrganizationSectionChange) {
+            onOrganizationSectionChange(value);
+        }
+    };
 
     // --- LOGIC MENU ITEMS ---
     const baseMenuItems: NavItem[] = [
