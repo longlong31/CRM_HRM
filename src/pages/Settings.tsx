@@ -72,21 +72,27 @@ const Settings = () => {
         setRole(userRole);
 
         // Fetch profile with notification settings
+        // Note: notification_settings and theme_preference columns may not exist yet if migration hasn't been deployed
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('notification_settings, theme_preference')
+          .select('*')
           .eq('id', user.id)
           .single();
 
-        if (profileError) throw profileError;
-
-        if (profileData?.notification_settings) {
-          setNotificationSettings(profileData.notification_settings);
+        if (profileError && profileError.code !== 'PGRST116') {
+          // Ignore "column not found" errors - migration may not be deployed yet
+          console.warn('Profile fetch warning:', profileError);
         }
 
-        if (profileData?.theme_preference) {
-          setThemePreference(profileData.theme_preference);
-          applyTheme(profileData.theme_preference);
+        if (profileData) {
+          if (profileData.notification_settings && typeof profileData.notification_settings === 'object') {
+            setNotificationSettings(profileData.notification_settings);
+          }
+
+          if (profileData.theme_preference) {
+            setThemePreference(profileData.theme_preference);
+            applyTheme(profileData.theme_preference);
+          }
         }
 
         // Load theme from localStorage as fallback
