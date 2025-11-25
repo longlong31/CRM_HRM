@@ -234,6 +234,7 @@ const DashboardLayout = ({ children, role = 'staff', organizationSection, onOrga
                         {menuItems.map((item) => {
                             const active = isActive(item.path);
                             const isOrgMenu = item.path === "/organization";
+                            const isTasksMenu = item.path === "/tasks";
 
                             if (isOrgMenu && userRole === 'admin') {
                                 return (
@@ -311,6 +312,155 @@ const DashboardLayout = ({ children, role = 'staff', organizationSection, onOrga
                                                     }}
                                                 >
                                                     Thống kê
+                                                </Button>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    </Accordion>
+                                );
+                            }
+
+                            if (isTasksMenu) {
+                                return (
+                                    <Accordion key={item.path} type="single" collapsible value={expandedTasks || ''} onValueChange={setExpandedTasks}>
+                                        <AccordionItem value="tasks-menu">
+                                            <AccordionTrigger className={`w-full text-left font-medium text-base transition-all px-3 py-2 hover:bg-accent rounded-lg ${active ? 'bg-secondary' : ''}`}>
+                                                <div className="flex items-center gap-3 flex-1">
+                                                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                                                    <span className="truncate">{item.label}</span>
+                                                </div>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="mt-2 space-y-1 ml-6">
+                                                <Button
+                                                    variant={expandedTasks === 'board' ? 'secondary' : 'ghost'}
+                                                    className="w-full justify-start text-sm"
+                                                    onClick={() => {
+                                                        setExpandedTasks('board');
+                                                        if (onTasksSectionChange) onTasksSectionChange('board');
+                                                        navigate('/tasks');
+                                                    }}
+                                                >
+                                                    Bảng
+                                                </Button>
+                                                <Button
+                                                    variant={expandedTasks === 'list' ? 'secondary' : 'ghost'}
+                                                    className="w-full justify-start text-sm"
+                                                    onClick={() => {
+                                                        setExpandedTasks('list');
+                                                        if (onTasksSectionChange) onTasksSectionChange('list');
+                                                        navigate('/tasks');
+                                                    }}
+                                                >
+                                                    Danh sách
+                                                </Button>
+                                                <Button
+                                                    variant={expandedTasks === 'schedule' ? 'secondary' : 'ghost'}
+                                                    className="w-full justify-start text-sm"
+                                                    onClick={() => {
+                                                        setExpandedTasks('schedule');
+                                                        if (onTasksSectionChange) onTasksSectionChange('schedule');
+                                                        navigate('/tasks');
+                                                    }}
+                                                >
+                                                    Lịch & Gantt
+                                                </Button>
+                                                <Button
+                                                    variant={expandedTasks === 'roadmap' ? 'secondary' : 'ghost'}
+                                                    className="w-full justify-start text-sm"
+                                                    onClick={() => {
+                                                        setExpandedTasks('roadmap');
+                                                        if (onTasksSectionChange) onTasksSectionChange('roadmap');
+                                                        navigate('/tasks');
+                                                    }}
+                                                >
+                                                    Roadmap
+                                                </Button>
+                                                <Button
+                                                    variant={expandedTasks === 'team' ? 'secondary' : 'ghost'}
+                                                    className="w-full justify-start text-sm"
+                                                    onClick={() => {
+                                                        setExpandedTasks('team');
+                                                        if (onTasksSectionChange) onTasksSectionChange('team');
+                                                        navigate('/tasks');
+                                                    }}
+                                                >
+                                                    Nhóm
+                                                </Button>
+                                                <Button
+                                                    variant={expandedTasks === 'workload' ? 'secondary' : 'ghost'}
+                                                    className="w-full justify-start text-sm"
+                                                    onClick={() => {
+                                                        setExpandedTasks('workload');
+                                                        if (onTasksSectionChange) onTasksSectionChange('workload');
+                                                        navigate('/tasks');
+                                                    }}
+                                                >
+                                                    Phân Bổ
+                                                </Button>
+                                                <Button
+                                                    variant={expandedTasks === 'goals' ? 'secondary' : 'ghost'}
+                                                    className="w-full justify-start text-sm"
+                                                    onClick={() => {
+                                                        setExpandedTasks('goals');
+                                                        if (onTasksSectionChange) onTasksSectionChange('goals');
+                                                        navigate('/tasks');
+                                                    }}
+                                                >
+                                                    Mục tiêu
+                                                </Button>
+                                                <Button
+                                                    variant={expandedTasks === 'forms' ? 'secondary' : 'ghost'}
+                                                    className="w-full justify-start text-sm"
+                                                    onClick={() => {
+                                                        setExpandedTasks('forms');
+                                                        if (onTasksSectionChange) onTasksSectionChange('forms');
+                                                        navigate('/tasks');
+                                                    }}
+                                                >
+                                                    Biểu mẫu
+                                                </Button>
+                                                <Button
+                                                    variant={expandedTasks === 'development' ? 'secondary' : 'ghost'}
+                                                    className="w-full justify-start text-sm"
+                                                    onClick={() => {
+                                                        setExpandedTasks('development');
+                                                        if (onTasksSectionChange) onTasksSectionChange('development');
+                                                        navigate('/tasks');
+                                                    }}
+                                                >
+                                                    Development
+                                                </Button>
+                                                <Button
+                                                    variant={expandedTasks === 'files' ? 'secondary' : 'ghost'}
+                                                    className="w-full justify-start text-sm"
+                                                    onClick={() => {
+                                                        setExpandedTasks('files');
+                                                        if (onTasksSectionChange) onTasksSectionChange('files');
+                                                        navigate('/tasks');
+                                                    }}
+                                                >
+                                                    Tài liệu
+                                                </Button>
+                                                <Button
+                                                    variant={expandedTasks === 'reports' ? 'secondary' : 'ghost'}
+                                                    className="w-full justify-start text-sm"
+                                                    onClick={() => {
+                                                        setExpandedTasks('reports');
+                                                        if (onTasksSectionChange) onTasksSectionChange('reports');
+                                                        navigate('/tasks');
+                                                    }}
+                                                >
+                                                    Báo Cáo
+                                                </Button>
+                                                <Button
+                                                    variant={expandedTasks === 'analytics' ? 'secondary' : 'ghost'}
+                                                    className="w-full justify-start text-sm"
+                                                    onClick={() => {
+                                                        setExpandedTasks('analytics');
+                                                        if (onTasksSectionChange) onTasksSectionChange('analytics');
+                                                        navigate('/tasks');
+                                                    }}
+                                                >
+                                                    Phân tích
                                                 </Button>
                                             </AccordionContent>
                                         </AccordionItem>
