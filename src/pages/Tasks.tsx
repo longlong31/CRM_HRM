@@ -26,6 +26,7 @@ const Tasks = () => {
   const [teamId, setTeamId] = useState<string>('');
   const [creatorData, setCreatorData] = useState<Record<string, any>>({});
   const [assigneeData, setAssigneeData] = useState<Record<string, any>>({});
+  const [activeTab, setActiveTab] = useState<string>('board');
 
   useEffect(() => {
     const loadUserData = async () => {
