@@ -204,7 +204,18 @@ const Settings = () => {
         .update({ notification_settings: updatedSettings })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (error) {
+        // If column doesn't exist, prompt user to deploy migration
+        if (error.message?.includes('notification_settings')) {
+          toast({
+            title: "Cần Cập Nhật Database",
+            description: "Vui lòng deploy migration: supabase migration push --linked",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
 
       setNotificationSettings(updatedSettings);
 
