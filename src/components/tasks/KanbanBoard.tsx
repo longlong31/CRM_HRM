@@ -556,6 +556,8 @@ export const KanbanBoard = ({ teamId, userId, users }: KanbanBoardProps) => {
                                 userId={userId}
                                 users={users}
                                 teamId={teamId}
+                                selectedGroupId={selectedGroupId}
+                                selectedSpaceId={selectedSpaceId}
                                 onCreateTask={createTask}
                                 onUpdateTask={updateTask}
                                 onDeleteTask={deleteTask}
