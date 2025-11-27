@@ -577,6 +577,8 @@ interface KanbanColumnProps {
     teamId: string;
     selectedGroupId: string;
     selectedSpaceId: string;
+    groups: Group[];
+    spaces: Space[];
     users: Array<{ id: string; first_name?: string; last_name?: string; avatar_url?: string | null }>;
     onCreateTask: (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completed_at'>) => Promise<Task | undefined>;
     onUpdateTask: (taskId: string, updates: Partial<Task>) => Promise<Task | undefined>;
@@ -590,6 +592,8 @@ const KanbanColumn = ({
     teamId,
     selectedGroupId,
     selectedSpaceId,
+    groups,
+    spaces,
     users,
     onCreateTask,
     onUpdateTask,
@@ -704,7 +708,7 @@ const KanbanColumn = ({
                                         <SelectItem value="low">Low (Thấp)</SelectItem>
                                         <SelectItem value="medium">Medium (Trung bình)</SelectItem>
                                         <SelectItem value="high">High (Cao)</SelectItem>
-                                        <SelectItem value="urgent">Urgent (Khẩn cấp)</SelectItem>
+                                        <SelectItem value="urgent">Urgent (Khẩn c��p)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
