@@ -473,7 +473,7 @@ export const KanbanBoard = ({ teamId, userId, users }: KanbanBoardProps) => {
                             className="text-xs"
                         >
                             <X className="h-4 w-4 mr-1" />
-                            X��a lọc
+                            Xóa lọc
                         </Button>
                     )}
                 </div>
@@ -722,11 +722,13 @@ const KanbanColumn = ({
 interface TaskCardProps {
     task: Task;
     users: Array<{ id: string; first_name?: string; last_name?: string; avatar_url?: string | null }>;
+    groups: Group[];
+    spaces: Space[];
     onUpdate: (taskId: string, updates: Partial<Task>) => Promise<Task | undefined>;
     onDelete: (taskId: string) => Promise<void>;
 }
 
-const TaskCard = ({ task, users, onUpdate, onDelete }: TaskCardProps) => {
+const TaskCard = ({ task, users, groups, spaces, onUpdate, onDelete }: TaskCardProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [formData, setFormData] = useState(task);
@@ -890,7 +892,7 @@ const TaskCard = ({ task, users, onUpdate, onDelete }: TaskCardProps) => {
                     <DialogHeader>
                         <DialogTitle>Xác nhận Xóa Công việc</DialogTitle>
                         <DialogDescription>
-                            Bạn có chắc chắn muốn xóa công việc "{task.title}" không? Hành động này không thể hoàn tác.
+                            Bạn c�� chắc chắn muốn xóa công việc "{task.title}" không? Hành động này không thể hoàn tác.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
