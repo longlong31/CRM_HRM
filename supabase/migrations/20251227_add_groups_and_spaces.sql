@@ -93,11 +93,11 @@ DROP POLICY IF EXISTS "Users can create groups in their team" ON public.groups;
 DROP POLICY IF EXISTS "Users can manage groups" ON public.groups;
 DROP POLICY IF EXISTS "Users can delete groups" ON public.groups;
 
--- Users can view groups of their team
+-- Users can view groups of their team or admins can view all
 CREATE POLICY "Users can view team groups" ON public.groups
   FOR SELECT USING (
-    team_id IN (SELECT team_id FROM public.profiles WHERE id = auth.uid())
-    OR EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
+    EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
+    OR team_id IN (SELECT team_id FROM public.profiles WHERE id = auth.uid())
   );
 
 -- Users can create groups in their team (leaders and admins)
