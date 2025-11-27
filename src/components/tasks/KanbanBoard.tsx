@@ -412,14 +412,16 @@ export const KanbanBoard = ({ teamId, userId, users }: KanbanBoardProps) => {
                         <h3 className="text-sm font-semibold text-muted-foreground">Chọn Nhóm & Không Gian</h3>
                         {(selectedGroupId || selectedSpaceId) && (
                             <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    setSelectedGroupId(groups[0]?.id || '');
-                                    setSelectedSpaceId('');
-                                }}
-                                className="text-xs"
-                            >
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                if (groups.length > 0) {
+                                    setSelectedGroupId(groups[0].id);
+                                }
+                                setSelectedSpaceId('');
+                            }}
+                            className="text-xs"
+                        >
                                 <X className="h-3 w-3 mr-1" />
                                 Đặt lại
                             </Button>
